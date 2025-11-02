@@ -7,3 +7,14 @@ requires-python = ">=3.12"
 dependencies = [
     "django>=5.2.7",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "django-stub>=0.1",
+    "django-types>=0.22.0",
+]
+
+
+[tool.basedpyright]
+reportUninitializedInstanceVariable = false
+

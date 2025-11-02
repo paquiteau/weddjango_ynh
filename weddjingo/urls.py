@@ -16,8 +16,16 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+from wedding.admin import wedding_admin_site
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path('admin/', wedding_admin_site.urls),  # Use the custom admin site
+    path('', include('wedding.urls')),  
 ]
+
+# Add this for serving media files (like generated QR codes) during development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

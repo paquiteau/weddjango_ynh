@@ -1,0 +1,66 @@
+{% extends 'wedding/base.html' %}
+{% block content %}
+    <h2>RSVP for {{ group.group_name }}</h2>
+    <p>Please let us know your plans by December 1st.</p>
+
+    <form method="POST">
+        {% csrf_token %}
+        {{ guest_formset.management_form }}
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h3>Guests</h3>
+            </div>
+            <div class="card-body">
+                {% for form in guest_formset %}
+                <div class="mb-3 border-bottom pb-3">
+                    <h4 class="mb-3">{{ form.instance.first_name }} {{ form.instance.last_name }}</h4>
+                    {{ form.id }} {% if invitation_tier == 'C' or invitation_tier == 'K' or invitation_tier == 'D' %}
+                    <div class="form-check form-switch mb-2">
+                        {{ form.is_attending_ceremony.label_tag }}
+                        {{ form.is_attending_ceremony }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if invitation_tier == 'K' or invitation_tier == 'D' %}
+                    <div class="form-check form-switch mb-2">
+                        {{ form.is_attending_cocktail.label_tag }}
+                        {{ form.is_attending_cocktail }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if invitation_tier == 'D' %}
+                    <div class="form-check form-switch mb-2">
+                        {{ form.is_attending_dinner.label_tag }}
+                        {{ form.is_attending_dinner }}
+                    </div>
+                    {% endif %}
+
+                    <label class="form-label mt-2">{{ form.dietary_restrictions.label }}</label>
+                    {{ form.dietary_restrictions }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h3>Group Details</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-check form-switch mb-3">
+                    {{ group_form.requests_sleeping.label_tag }}
+                    {{ group_form.requests_sleeping }}
+                    <small class="form-text">We have limited space, but will try our best!</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">{{ group_form.group_message.label }}</Rlabel>
+                    {{ group_form.group_message }}
+                </div>
+            </div>
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-lg mt-4">Submit RSVP</button>
+    </form>
+{% endblock %}
