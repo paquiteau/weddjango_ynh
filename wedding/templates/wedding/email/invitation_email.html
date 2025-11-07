@@ -1,0 +1,17 @@
+<p>Dear {{ contact_name }} and the rest of the {{ group.group_name }},</p>
+
+<p>We are thrilled to invite you to our wedding!</p>
+
+<p>Please click the link below or scan the QR code to submit your RSVP and update your contact information:</p>
+
+<p>
+    <img src="cid:{{ qr_cid }}" alt="RSVP QR Code" width="150" height="150" style="display: block; margin: 20px 0;">
+</p>
+
+<p>
+    Link: <a href="https://yourweddingdomain.com/rsvp/{{ group.invitation_code }}">{{ group.get_formatted_code }}</a>
+</p>
+
+<p>We look forward to celebrating with you!</p>
+
+<p>Best,<br>Alice & Bob</p>

@@ -1,52 +1,89 @@
-from typing import final
 from django import forms
-from django.forms import ModelForm
+from django.forms import BaseInlineFormSet, ModelForm, ValidationError, inlineformset_factory
 from .models import Group, Guest
 
 
-@final
-class GroupRSVPForm(ModelForm):
+class GuestInlineFormSet(BaseInlineFormSet):
     """
-    Form for the Group-level questions (sleeping, message).
+    Custom formset to enforce that at least one guest in the group has an email address.
     """
+    def clean(self):
+        # 1. Call the parent clean method first
+        super().clean() 
+        
+        if any(self.errors):
+            return
+            
+        has_email = False
 
-    @final
+        # 2. Iterate over forms and check for email, respecting deletion status
+        for form in self.forms:
+            # Check if the form is valid and not marked for deletion
+            if form.cleaned_data:
+                # The Admin sets 'DELETE' in cleaned_data if the form's checkbox is checked
+                # We only proceed if 'DELETE' is False (i.e., the guest is being kept)
+                is_deleted = form.cleaned_data.get('DELETE')
+                
+                if not is_deleted:
+                    email_data = form.cleaned_data.get('email')
+                    if email_data:
+                        has_email = True
+                        break # Found an email and an address we can stop checking
+                
+        # 3. Raise the ValidationError if validation fails
+        if not has_email:
+            raise ValidationError(
+                "Au moins un invité du Groupe doit avoir une adresse e-mail et une adresse postale renseignées."
+            )
+
+class GroupRSVPForm(ModelForm):
+    """Form for guests to update group-level information."""
     class Meta:
         model = Group
-        fields = ["requests_sleeping", "group_message"]
+        fields = [
+            'address_line_1', 
+            'address_line_2', 
+            'city', 
+            'postal_code', 
+            'country', 
+            'requests_sleeping', 
+            'group_message'
+        ]
+        labels = {
+            'requests_sleeping': 'We would like to request on-site sleeping (if available).',
+        }
         widgets = {
-            "requests_sleeping": forms.CheckboxInput(
-                attrs={"class": "form-check-input"}
-            ),
-            "group_message": forms.Textarea(attrs={"rows": 3, "class": "form-control"}),
+            'group_message': forms.Textarea(attrs={'rows': 3}),
         }
 
-
+# --- NEW: Form for Individual Guest RSVP/Update ---
 class GuestRSVPForm(ModelForm):
-    """
-    Form for each individual Guest (attending status, diet).
-    """
-
-    @final
+    """Form for guests to update their email and attendance."""
     class Meta:
         model = Guest
         fields = [
-            "is_attending_ceremony",
-            "is_attending_cocktail",
-            "is_attending_dinner",
-            "dietary_restrictions",
+            # Personal Updatable Info
+            'email',
+            'dietary_restrictions',
+            # Attendance for Events (Attendance fields will be dynamic in the view)
+            'is_attending_ceremony', 
+            'is_attending_cocktail', 
+            'is_attending_dinner',
         ]
+        # Make the attendance fields checkboxes instead of generic booleans
         widgets = {
-            "is_attending_ceremony": forms.CheckboxInput(
-                attrs={"class": "form-check-input"}
-            ),
-            "is_attending_cocktail": forms.CheckboxInput(
-                attrs={"class": "form-check-input"}
-            ),
-            "is_attending_dinner": forms.CheckboxInput(
-                attrs={"class": "form-check-input"}
-            ),
-            "dietary_restrictions": forms.TextInput(
-                attrs={"class": "form-control form-control-sm"}
-            ),
+            'is_attending_ceremony': forms.CheckboxInput(),
+            'is_attending_cocktail': forms.CheckboxInput(),
+            'is_attending_dinner': forms.CheckboxInput(),
         }
+
+# --- CREATE the Formset Factory ---
+# This factory creates the formset needed by the view
+GuestFormSet = inlineformset_factory(
+    Group, 
+    Guest, 
+    form=GuestRSVPForm, 
+    formset=GuestInlineFormSet, # Use custom formset for email validation
+    extra=0, # Do not show empty extra forms
+    can_delete=False # Guests cannot be removed from the list
+)

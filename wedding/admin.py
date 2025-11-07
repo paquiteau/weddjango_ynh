@@ -1,15 +1,16 @@
-from typing import final, override
+from typing import override
 
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.http import HttpRequest
-from .models import Group, Guest
+from django.urls import reverse
+from django.utils.safestring import mark_safe
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.conf import settings
 
-# wedding/admin.py (UPDATED)
-
-from django.contrib import admin
-from django.contrib.auth.models import User, Group as AuthGroup # Renaming to avoid confusion
+from .forms import GuestInlineFormSet
 from .models import Group, Guest
-from django.db.models import Count
+from .utils import generate_qr_code_data # Import the utility function
 
 class SimpleWeddingAdminSite(admin.AdminSite):
     """
@@ -18,25 +19,25 @@ class SimpleWeddingAdminSite(admin.AdminSite):
     site_header = "Wedding Site Administration" # Customize the header text
     site_title = "Wedding Admin" # Customize the browser title
 
-    # Automatically unregister the default auth models
-    def has_permission(self, request):
+    @override
+    def has_permission(self, request: HttpRequest) -> bool:
         # We need the user to be a superuser or staff to access the admin
         return request.user.is_active and request.user.is_staff
 
 # Instantiate your custom site
 wedding_admin_site = SimpleWeddingAdminSite(name='wedding_admin')
 
-class GuestInline(admin.TabularInline):
+class GuestInline(admin.StackedInline):
     """
     Allows editing Guest models directly inside the Group admin page.
     """
 
     model = Guest
     extra= 1  # Show 1 blank slot for a new guest
-    fields = ("first_name", "last_name", "is_child", "dietary_restrictions", "email")
+    fields = (("first_name", "last_name", "status"), "dietary_restrictions", "email")
     verbose_name = "Guest"
     verbose_name_plural = "Guests in this Group"
-
+    formset = GuestInlineFormSet
 
 @admin.register(Group, site=wedding_admin_site) # Register Group model with the custom site
 class GroupAdmin(admin.ModelAdmin):
@@ -44,6 +45,80 @@ class GroupAdmin(admin.ModelAdmin):
     The admin configuration for the Group model.
     """
 
+    actions = ["send_invitations_action"]
+    # 1. NEW ADMIN ACTION METHOD
+    @admin.action(description='Send Email Invitation')
+    def send_invitations_action(self, request, queryset):
+        total_sent = 0
+        total_skipped = 0
+        
+        for group in queryset:
+            # Get the primary contact email (the first one found)
+            contact_guest = group.guests.filter(email__isnull=False).filter(email__gt='').first()
+            
+            if not contact_guest:
+                messages.warning(request, f'Skipping {group.group_name}: No contact email found for any guest.')
+                total_skipped += 1
+                continue
+
+            recipient_email = contact_guest.email
+            
+            try:
+                # 2. Generate QR Code Data (In Memory)
+                qr_buffer = generate_qr_code_data(group.invitation_code)
+                qr_cid = f'qr_code_{group.invitation_code}' 
+
+                # 3. Render Email Content
+                context = {
+                    'group': group,
+                    'contact_name': contact_guest.first_name,
+                    'qr_cid': qr_cid,
+                }
+                html_content = render_to_string('wedding/email/invitation_email.html', context)
+                text_content = render_to_string('wedding/email/invitation_email.txt', context)
+
+                # 4. Create and Send Email Object
+                msg = EmailMultiAlternatives(
+                    subject=f"You're Invited! Wedding RSVP for the {group.group_name}",
+                    body=text_content,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[recipient_email],
+                )
+                msg.attach_alternative(html_content, "text/html")
+
+                # Attach QR Code Inline
+                msg.attach(
+                    filename=f'qrcode_{group.invitation_code}.png',
+                    content=qr_buffer.read(),
+                    mimetype='image/png',
+                )
+
+                msg.send()
+                total_sent += 1
+                
+            except Exception as e:
+                messages.error(request, f'Failed to send email to {group.group_name} at {recipient_email}: {e}')
+                total_skipped += 1
+
+        if total_sent > 0:
+            messages.success(request, f'Successfully sent invitations to {total_sent} group(s).')
+        
+        if total_skipped > 0:
+             messages.info(request, f'{total_skipped} group(s) were skipped due to errors or missing email addresses.')
+        
+        # Prevent the action from redirecting away from the changelist view
+        return None
+    
+
+    @admin.display(description='RSVP Link')
+    def rsvp_link_display(self, obj:Group) -> str:
+        if obj.invitation_code:
+            url = reverse('rsvp', kwargs={'invitation_code': obj.invitation_code})
+            # full_url = request.build_absolute_uri(url) # Requires access to 'request'
+            # Return safe HTML for a clickable link
+            return mark_safe(f'<a href="{url}" target="_blank">/rsvp/{obj.formatted_code}/</a>')
+        return "Code not yet generated" # Should not happen with current model default
+    
     # What to show in the main list
     list_display = (
         "group_name",
@@ -67,7 +142,7 @@ class GroupAdmin(admin.ModelAdmin):
     fieldsets = (
         ("Group Info", {"fields": ("group_name", "invitation_tier")}),
         (
-           http://localhost:8000/ "RSVP Response",
+           "RSVP Response",
             {
                 "fields": (
                     "rsvp_submitted",
@@ -80,8 +155,7 @@ class GroupAdmin(admin.ModelAdmin):
         (
             "Invitation Link",
             {
-                "description": "Send this link to the guest: /rsvp/INVITATION_CODE/",
-                "fields": ("invitation_code",),
+                "fields": ("rsvp_link_display",),
             },
         ),
     )
@@ -94,7 +168,7 @@ class GroupAdmin(admin.ModelAdmin):
         # RSVP RESPONSE FIELDS ARE OMITTED HERE
     )
     # Make these fields read-only in the admin
-    readonly_fields = ("invitation_code", "submitted_at")
+    readonly_fields = ("rsvp_link_display", "submitted_at")
 # 
 # This method tells Django Admin which fieldsets to use for new objects
 
@@ -105,8 +179,8 @@ class GroupAdmin(admin.ModelAdmin):
         return super().get_fieldsets(request, obj)
 
     @admin.display(description='RSVP Code')
-    def get_formatted_code(self, obj):
-        return obj.get_formatted_code()
+    def get_formatted_code(self, obj:Group) -> str:
+        return obj.formatted_code
     # A helper function for the 'guest_count' in list_display
     @admin.display(description="Guest Count")
     def guest_count(self, obj: Group) -> int:
@@ -116,8 +190,5 @@ class GroupAdmin(admin.ModelAdmin):
     def get_group_email(self, obj:Group):
         """Displays the email of the first guest in the group who has one."""
         first_guest_with_email = obj.guests.filter(email__isnull=False).filter(email__gt='').first()
-        return first_guest_with_email.email if first_guest_with_email else "⚠️ NO EMAIL SET"
+        return first_guest_with_email.email if first_guest_with_email else "NO EMAIL SET"
 
-# We don't need a separate admin for Guest, as it's handled in-line.
-# But you could register it if you wanted a separate list.
-# admin.site.register(Guest)

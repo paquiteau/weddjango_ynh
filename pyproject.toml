@@ -1,11 +1,12 @@
 [project]
-name = "weddjingo"
+name = "weddjango"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "django>=5.2.7",
+    "qrcode[pil]>=8.2",
 ]
 
 [project.optional-dependencies]
@@ -17,4 +18,6 @@ dev = [
 
 [tool.basedpyright]
 reportUninitializedInstanceVariable = false
-
+reportUnannotatedClassAttribute = false
+reportMissingTypeArgument = false
+reportImplicitOverride = false

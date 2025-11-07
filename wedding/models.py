@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 import string
-from typing import final, override
+from typing import final
 
 # Create your models here.
 # wedding/models.py
@@ -13,11 +13,16 @@ from django.core.exceptions import ValidationError
 
 class InvitationTier(models.TextChoices):
     FAIRE_PART = "F", _("Faire-Part uniquement")
-    MESSE = "M", _("Messe")
-    COCKTAIL = "K", _("Cocktail")
-    DINNER = "D", _("Dinner")
-    MAIRIE = "R", _("Mairie")
+    MESSE = "M", _("Messe (+ Faire-Part)")
+    COCKTAIL = "K", _("Cocktail (+ Messe + Faire-Part)")
+    REPAS = "D", _("Repas (+ Cocktail + Messe + Faire-Part)")
+    MAIRIE = "R", _("Mairie (+ Dinner + Cocktail + Messe + Faire-Part)")
 
+class StatusChoices(models.TextChoices):
+    ENFANT = "C", _("Enfant")
+    ADULTE = "A", _("Adulte")
+    BABYSITTED = "B", _("Enfant qui a besoin d'un baby-sitting")
+    
 
 def generate_short_code(length: int = 8) -> str:
     """
@@ -53,6 +58,13 @@ class Group(models.Model):
         max_length=255, help_text="e.g., 'La Famille XXX' ou 'Alice & Bob'"
     )
 
+    address_line_1 = models.CharField(max_length=255, blank=True, verbose_name="Addresse (1)")
+    address_line_2 = models.CharField(max_length=255, blank=True, verbose_name="Addresse (2)")
+    city = models.CharField(max_length=100, blank=True, verbose_name="Ville")
+    postal_code = models.CharField(max_length=20, blank=True, verbose_name="Code Postal")
+    country = models.CharField(max_length=100, blank=True, verbose_name="Pays")
+
+
     # Invitation Details
     invitation_tier = models.CharField(
         max_length=1,
@@ -74,12 +86,11 @@ class Group(models.Model):
     )
     group_message = models.TextField(
         blank=True,
-        verbose_name="Message for the couple",
-        help_text="Dietary restrictions, songs, or just a nice note!",
+        verbose_name="Un message pour les mariés",
+        help_text="Ce qui est important pour vous, quelque chose à prendre en compte, ou juste un petit mot!",
     )
     submitted_at = models.DateTimeField(null=True, blank=True, editable=False)
 
-    @override
     def __str__(self):
         return self.group_name
 
@@ -87,20 +98,15 @@ class Group(models.Model):
     def guest_count(self) -> int:
         return self.guests.count()
 
-    @override
     def clean(self):
         """Ensure at least one guest in the group has an email address."""
         # Check if the group has been saved and has guests associated
-        if self.id:
-            # Check if any guest in this group has a non-empty email
-            if (
-                not self.guests.filter(email__isnull=False)
-                .filter(email__gt="")
-                .exists()
-            ):
-                raise ValidationError(
-                    "At least one guest in this group must have an email address."
-                )
+        if self.id and not (
+            self.guests.filter(email__isnull=False).filter(email__gt="").exists()
+        ):
+            raise ValidationError(
+                "Au moins un invité doit avoir son adresse mail renseignée."
+            )
 
     @property
     def formatted_code(self) -> str:
@@ -120,15 +126,12 @@ class Guest(models.Model):
     # Guest Info
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    is_child = models.BooleanField(default=False, verbose_name="Mineure/Enfant")
-    is_babysitted = models.BooleanField(
-        default=False, verbose_name="Besoin de baby-sitting"
-    )
+
+    status = models.CharField(choices=StatusChoices.choices, max_length=1, default=StatusChoices.ADULTE, verbose_name="Je suis un(e)")
 
     email = models.EmailField(
         blank=True, null=True, max_length=254, help_text="Email de contact."
     )
-    #
     # RSVP Status (filled by the guest)
     is_attending_ceremony = models.BooleanField(
         default=False, verbose_name="Participe à la Cérémonie"
@@ -147,6 +150,5 @@ class Guest(models.Model):
         max_length=255, blank=True, verbose_name="Allergies / Régimes alimentaires"
     )
 
-    @override
     def __str__(self) -> str:
         return f"{self.first_name} {self.last_name}"

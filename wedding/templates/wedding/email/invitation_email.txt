@@ -1,0 +1,12 @@
+Dear {{ contact_name }} and the rest of the {{ group.group_name }},
+
+We are thrilled to invite you to our wedding!
+
+Please click the link below to submit your RSVP and update your contact information:
+
+https://yourweddingdomain.com/rsvp/{{ group.invitation_code }}
+
+We look forward to celebrating with you!
+
+Best,
+Alice & Bob

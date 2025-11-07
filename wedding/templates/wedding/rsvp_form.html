@@ -1,66 +1,145 @@
 {% extends 'wedding/base.html' %}
+{% load wedding_filter static %}
+
 {% block content %}
-    <h2>RSVP for {{ group.group_name }}</h2>
-    <p>Please let us know your plans by December 1st.</p>
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+            <h1 class="text-center mb-4">RSVP for {{ group.group_name }}</h1>
+            <p class="lead text-center">Please take a moment to update your details and let us know your plans.</p>
 
-    <form method="POST">
-        {% csrf_token %}
-        {{ guest_formset.management_form }}
-
-        <div class="card shadow-sm mb-4">
-            <div class="card-header">
-                <h3>Guests</h3>
-            </div>
-            <div class="card-body">
-                {% for form in guest_formset %}
-                <div class="mb-3 border-bottom pb-3">
-                    <h4 class="mb-3">{{ form.instance.first_name }} {{ form.instance.last_name }}</h4>
-                    {{ form.id }} {% if invitation_tier == 'C' or invitation_tier == 'K' or invitation_tier == 'D' %}
-                    <div class="form-check form-switch mb-2">
-                        {{ form.is_attending_ceremony.label_tag }}
-                        {{ form.is_attending_ceremony }}
-                    </div>
-                    {% endif %}
-                    
-                    {% if invitation_tier == 'K' or invitation_tier == 'D' %}
-                    <div class="form-check form-switch mb-2">
-                        {{ form.is_attending_cocktail.label_tag }}
-                        {{ form.is_attending_cocktail }}
-                    </div>
-                    {% endif %}
-                    
-                    {% if invitation_tier == 'D' %}
-                    <div class="form-check form-switch mb-2">
-                        {{ form.is_attending_dinner.label_tag }}
-                        {{ form.is_attending_dinner }}
-                    </div>
-                    {% endif %}
-
-                    <label class="form-label mt-2">{{ form.dietary_restrictions.label }}</label>
-                    {{ form.dietary_restrictions }}
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <div class="card shadow-sm">
-            <div class="card-header">
-                <h3>Group Details</h3>
-            </div>
-            <div class="card-body">
-                <div class="form-check form-switch mb-3">
-                    {{ group_form.requests_sleeping.label_tag }}
-                    {{ group_form.requests_sleeping }}
-                    <small class="form-text">We have limited space, but will try our best!</small>
-                </div>
+            <form method="POST" novalidate>
+                {% csrf_token %}
                 
-                <div class="mb-3">
-                    <label class="form-label">{{ group_form.group_message.label }}</Rlabel>
-                    {{ group_form.group_message }}
+                {# Display formset errors clearly at the top #}
+                {% if guest_formset.non_form_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        <strong>Important:</strong> 
+                        {% for error in guest_formset.non_form_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {# -------------------------------------------------------------------------------- #}
+                {# 1. GROUP CONTACT & ADDRESS SECTION #}
+                {# -------------------------------------------------------------------------------- #}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h4 class="mb-0">Group Contact Information</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">{{ group_form.address_line_1.label }}</label>
+                                {{ group_form.address_line_1 }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">{{ group_form.address_line_2.label }}</label>
+                                {{ group_form.address_line_2 }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ group_form.city.label }}</label>
+                                {{ group_form.city }}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">{{ group_form.postal_code.label }}</label>
+                                {{ group_form.postal_code }}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">{{ group_form.country.label }}</label>
+                                {{ group_form.country }}
+                            </div>
+                        </div>
+                        
+                        <div class="form-text mt-3">
+                            Please ensure your postal address is correct for thank-you notes!
+                        </div>
+                    </div>
                 </div>
-            </div>
+
+                {# -------------------------------------------------------------------------------- #}
+                {# 2. INDIVIDUAL GUEST RSVP SECTION (FORMSET) #}
+                {# -------------------------------------------------------------------------------- #}
+                <h3 class="mb-3">Individual Guest Details and Attendance</h3>
+                {{ guest_formset.management_form }}
+                
+                {% for form in guest_formset %}
+                    <div class="card shadow-sm mb-3">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0">{{ form.instance.first_name }} {{ form.instance.last_name }} 
+                                {% if form.instance.is_child %}<span class="badge bg-light text-secondary ms-2">Child</span>{% endif %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {{ form.id }} {# Hidden Guest ID #}
+
+                            <div class="row g-3 mb-4">
+                                {# Personal Updatable Info (Email and Dietary) #}
+                                <div class="col-md-6">
+                                    <label class="form-label">{{ form.email.label }}</label>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}
+                                        <div class="text-danger small">{{ form.email.errors }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Required for updates and communication.</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">{{ form.dietary_restrictions.label }}</label>
+                                    {{ form.dietary_restrictions }}
+                                    <small class="form-text">e.g., Vegetarian, Gluten-free, Allergies.</small>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            {# Attendance Fields (Dynamically shown by the view) #}
+                            <h6 class="mb-3"> Est-ce que {{ form.instance.first_name }} sera là?</h6>
+                            <div class="row">
+                                {% for field_name in attendance_fields %}
+                                    {% with field=form|get_field:field_name %}
+                                        {% if field %}
+                                            <div class="col-md-4">
+                                                <div class="form-check form-switch">
+                                                    {{ field }}
+                                                    <label class="form-check-label" for="{{ field.id_for_label }}">
+                                                        {% if field_name == 'is_attending_ceremony' %}Ceremony{% endif %}
+                                                        {% if field_name == 'is_attending_cocktail' %}Cocktail Reception{% endif %}
+                                                        {% if field_name == 'is_attending_dinner' %}Dinner & Dancing{% endif %}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                {# -------------------------------------------------------------------------------- #}
+                {# 3. GROUP FINAL REQUESTS AND SUBMISSION #}
+                {# -------------------------------------------------------------------------------- #}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="form-check form-switch mb-3">
+                            {{ group_form.requests_sleeping }}
+                            <label class="form-check-label" for="{{ group_form.requests_sleeping.id_for_label }}">
+                                {{ group_form.requests_sleeping.label }}
+                            </label>
+                            <small class="form-text d-block"> Le nombre de lit est limité sur place, nous ferons au mieux.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ group_form.group_message.label }}</label>
+                            {{ group_form.group_message }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-success btn-lg mt-3">Submit RSVP & Updates</button>
+                </div>
+            </form>
         </div>
-        
-        <button type="submit" class="btn btn-primary btn-lg mt-4">Submit RSVP</button>
-    </form>
+    </div>
 {% endblock %}
