@@ -116,7 +116,7 @@ class GroupAdmin(admin.ModelAdmin):
             url = reverse('rsvp', kwargs={'invitation_code': obj.invitation_code})
             # full_url = request.build_absolute_uri(url) # Requires access to 'request'
             # Return safe HTML for a clickable link
-            return mark_safe(f'<a href="{url}" target="_blank">/rsvp/{obj.formatted_code}/</a>')
+            return mark_safe(f'<a href="{url}" target="_blank">/rsvp/{obj.invitation_code}/</a>')
         return "Code not yet generated" # Should not happen with current model default
     
     # What to show in the main list
@@ -126,11 +126,12 @@ class GroupAdmin(admin.ModelAdmin):
         "guest_count",
         "get_group_email",
         "rsvp_submitted",
-        "requests_sleeping",
+        "requests_sleeping_friday",
+        "requests_sleeping_saturday",
     )
 
     # Filters (with Django 5.0+ facet counts)
-    list_filter = ("invitation_tier", "rsvp_submitted", "requests_sleeping")
+    list_filter = ("invitation_tier", "rsvp_submitted", "requests_sleeping_friday", "requests_sleeping_saturday")
 
     # Search functionality
     search_fields = ("group_name", "guests__first_name", "guests__last_name")
@@ -146,7 +147,8 @@ class GroupAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "rsvp_submitted",
-                    "requests_sleeping",
+                    "requests_sleeping_friday",
+                    "requests_sleeping_saturday",
                     "group_message",
                     "submitted_at",
                 )
@@ -180,7 +182,7 @@ class GroupAdmin(admin.ModelAdmin):
 
     @admin.display(description='RSVP Code')
     def get_formatted_code(self, obj:Group) -> str:
-        return obj.formatted_code
+        return obj.invitation_code
     # A helper function for the 'guest_count' in list_display
     @admin.display(description="Guest Count")
     def guest_count(self, obj: Group) -> int:

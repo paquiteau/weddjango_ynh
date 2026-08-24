@@ -18,23 +18,21 @@ class InvitationTier(models.TextChoices):
     REPAS = "D", _("Repas (+ Cocktail + Messe + Faire-Part)")
     MAIRIE = "R", _("Mairie (+ Dinner + Cocktail + Messe + Faire-Part)")
 
+
 class StatusChoices(models.TextChoices):
     ENFANT = "C", _("Enfant")
     ADULTE = "A", _("Adulte")
     BABYSITTED = "B", _("Enfant qui a besoin d'un baby-sitting")
-    
 
-def generate_short_code(length: int = 8) -> str:
+
+def generate_short_code(length: int = 4) -> str:
     """
-    Generates a random short alphanumeric code (e.g., A78DB2C9).
+    Generates a random short alphanumeric code (e.g., A78D).
     """
     characters = string.ascii_uppercase + string.digits
 
     # Generate the code
     code = "".join(random.choice(characters) for _ in range(length))
-
-    # Optional: Format the code with a hyphen for readability (e.g., A78D-B2C9)
-    # We will store it without the hyphen in the DB for easier lookup.
 
     # Ensure the code is unique before returning
     if Group.objects.filter(invitation_code=code).exists():
@@ -55,15 +53,20 @@ class Group(models.Model):
     id = models.AutoField(primary_key=True)
     # Core Info
     group_name = models.CharField(
-        max_length=255, help_text="e.g., 'La Famille XXX' ou 'Alice & Bob'"
+        max_length=255, help_text="e.g., 'La Famille XXX' ou 'Marine & Pierre-Antoine"
     )
 
-    address_line_1 = models.CharField(max_length=255, blank=True, verbose_name="Addresse (1)")
-    address_line_2 = models.CharField(max_length=255, blank=True, verbose_name="Addresse (2)")
+    address_line_1 = models.CharField(
+        max_length=255, blank=True, verbose_name="Addresse (1)"
+    )
+    address_line_2 = models.CharField(
+        max_length=255, blank=True, verbose_name="Addresse (2)"
+    )
     city = models.CharField(max_length=100, blank=True, verbose_name="Ville")
-    postal_code = models.CharField(max_length=20, blank=True, verbose_name="Code Postal")
+    postal_code = models.CharField(
+        max_length=20, blank=True, verbose_name="Code Postal"
+    )
     country = models.CharField(max_length=100, blank=True, verbose_name="Pays")
-
 
     # Invitation Details
     invitation_tier = models.CharField(
@@ -72,7 +75,7 @@ class Group(models.Model):
         default=InvitationTier.FAIRE_PART,
     )
     invitation_code = models.CharField(
-        max_length=8,
+        max_length=4,
         editable=False,
         default=generate_short_code,
         unique=True,
@@ -81,8 +84,11 @@ class Group(models.Model):
 
     # RSVP Response (filled by the guest)
     rsvp_submitted = models.BooleanField(default=False)
-    requests_sleeping = models.BooleanField(
-        default=False, verbose_name="Requires on-site sleeping"
+    requests_sleeping_friday = models.BooleanField(
+        default=False, verbose_name="Nuit de vendredi à samedi sur place"
+    )
+    requests_sleeping_saturday = models.BooleanField(
+        default=False, verbose_name="Nuit de samedi à dimanche sur place"
     )
     group_message = models.TextField(
         blank=True,
@@ -108,10 +114,6 @@ class Group(models.Model):
                 "Au moins un invité doit avoir son adresse mail renseignée."
             )
 
-    @property
-    def formatted_code(self) -> str:
-        """Returns the invitation code formatted with a hyphen for readability."""
-        return f"{self.invitation_code[:4]}-{self.invitation_code[4:]}"
 
 
 @final
@@ -127,7 +129,12 @@ class Guest(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
 
-    status = models.CharField(choices=StatusChoices.choices, max_length=1, default=StatusChoices.ADULTE, verbose_name="Je suis un(e)")
+    status = models.CharField(
+        choices=StatusChoices.choices,
+        max_length=1,
+        default=StatusChoices.ADULTE,
+        verbose_name="Je suis un(e)",
+    )
 
     email = models.EmailField(
         blank=True, null=True, max_length=254, help_text="Email de contact."
@@ -148,6 +155,17 @@ class Guest(models.Model):
 
     dietary_restrictions = models.CharField(
         max_length=255, blank=True, verbose_name="Allergies / Régimes alimentaires"
+    )
+
+    babysitting_notes = models.TextField(
+        blank=True, verbose_name="Besoins spécifiques (baby-sitting)"
+    )
+
+    song_request = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Une chanson pour la soirée",
+        help_text="Un morceau qui vous ferait danser !",
     )
 
     def __str__(self) -> str:

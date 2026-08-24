@@ -45,12 +45,14 @@ class GroupRSVPForm(ModelForm):
             'address_line_2', 
             'city', 
             'postal_code', 
-            'country', 
-            'requests_sleeping', 
+            'country',
+            'requests_sleeping_friday',
+            'requests_sleeping_saturday',
             'group_message'
         ]
         labels = {
-            'requests_sleeping': 'We would like to request on-site sleeping (if available).',
+            'requests_sleeping_friday': "Nous souhaitons loger sur place la nuit de vendredi à samedi (si disponible).",
+            'requests_sleeping_saturday': "Nous souhaitons loger sur place la nuit de samedi à dimanche (si disponible).",
         }
         widgets = {
             'group_message': forms.Textarea(attrs={'rows': 3}),
@@ -63,19 +65,37 @@ class GuestRSVPForm(ModelForm):
         model = Guest
         fields = [
             # Personal Updatable Info
+            'status',
             'email',
             'dietary_restrictions',
+            'babysitting_notes',
+            'song_request',
             # Attendance for Events (Attendance fields will be dynamic in the view)
-            'is_attending_ceremony', 
-            'is_attending_cocktail', 
+            'is_attending_ceremony',
+            'is_attending_mairie',
+            'is_attending_cocktail',
             'is_attending_dinner',
         ]
         # Make the attendance fields checkboxes instead of generic booleans
         widgets = {
             'is_attending_ceremony': forms.CheckboxInput(),
+            'is_attending_mairie': forms.CheckboxInput(),
             'is_attending_cocktail': forms.CheckboxInput(),
             'is_attending_dinner': forms.CheckboxInput(),
+            'babysitting_notes': forms.Textarea(attrs={'rows': 2}),
         }
+
+
+class RSVPLookupForm(forms.Form):
+    """Form used on the manual code-entry page to find a Group by its invitation code."""
+    code = forms.CharField(
+        max_length=4,
+        label="Votre code d'invitation",
+        widget=forms.HiddenInput(),
+    )
+
+    def clean_code(self) -> str:
+        return self.cleaned_data['code'].strip().upper()
 
 # --- CREATE the Formset Factory ---
 # This factory creates the formset needed by the view

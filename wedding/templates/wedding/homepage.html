@@ -1,31 +1,7 @@
+{% extends 'wedding/wedding_base.html' %}
 {% load static %}
-<!doctype html>
-<html lang="fr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Marine &amp; Pierre-Antoine</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Raleway:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'wedding/css/main.css' %}">
-</head>
-<body class="wedding-page">
-<div class="wedding-root">
 
-  <!-- NAV -->
-  <nav class="site-nav">
-    <a href="#top" class="site-nav__brand">Marine &amp; Pierre-Antoine</a>
-    <button type="button" class="site-nav__toggle" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="site-nav-links">
-      <span></span><span></span><span></span>
-    </button>
-    <div class="site-nav__links" id="site-nav-links">
-      <a href="#deroule" class="site-nav__link">Le déroulé</a>
-      <a href="#sejour" class="site-nav__link">Séjour &amp; accès</a>
-      <a href="#liste" class="site-nav__link">Liste de Mariage</a>
-      <a href="#rsvp" class="site-nav__link site-nav__link--cta">RSVP</a>
-    </div>
-  </nav>
+{% block content %}
 
   <!-- HERO -->
   <header id="top" class="hero">
@@ -66,8 +42,6 @@
 
     </div>
   </header>
-
-  <main class="wedding-main">
 
   <!-- CHÂTEAU REVEAL -->
     <section id="chateau" class="chateau-reveal">
@@ -200,20 +174,23 @@
   <section id="rsvp" class="rsvp-section">
       <!-- TODO: Use svg flower divider here also -->
     <h2 class="rsvp-title">Merci de nous confirmer votre présence</h2>
-    <p class="rsvp-text">avant le 10 février 2027 grâce au lien personnel reçu avec votre faire-part.</p>
+    <p class="rsvp-text">avant le 10 février 2027, grâce au code personnel reçu avec votre faire-part.</p>
+
+    <form method="POST" action="{% url 'rsvp_lookup' %}" class="rsvp-lookup-form" novalidate>
+      {% csrf_token %}
+      {% if lookup_form.code.errors %}
+        <div class="form-notice form-notice--error">{{ lookup_form.code.errors|join:" " }}</div>
+      {% endif %}
+      <div class="rsvp-lookup-form__row">
+        {% include 'wedding/_otp_input.html' with code_field=lookup_form.code %}
+        <button type="submit" class="hero__cta">Accéder à mon RSVP</button>
+      </div>
+    </form>
   </section>
 
-  <footer class="site-footer">
-    <p class="site-footer__names">Marine &amp; Pierre-Antoine</p>
-    <p class="site-footer__date">10 avril 2027 · Château de la Ferté-Saint-Aubin</p>
-    <p class="site-footer__contact">Une question ? mariage.marine.pa@exemple.fr</p>
-  </footer>
+{% endblock %}
 
-  </main>
-  </div>
-
-</div>
-
+{% block extra_js %}
 <script>
 (function () {
   var el = document.getElementById('countdown');
@@ -233,21 +210,6 @@
   }
   tick();
   setInterval(tick, 30000);
-
-  var navToggle = document.querySelector('.site-nav__toggle');
-  var navLinks = document.getElementById('site-nav-links');
-  navToggle.addEventListener('click', function () {
-    var open = navLinks.classList.toggle('site-nav__links--open');
-    navToggle.classList.toggle('site-nav__toggle--open', open);
-    navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-  });
-  navLinks.querySelectorAll('a').forEach(function (link) {
-    link.addEventListener('click', function () {
-      navLinks.classList.remove('site-nav__links--open');
-      navToggle.classList.remove('site-nav__toggle--open');
-      navToggle.setAttribute('aria-expanded', 'false');
-    });
-  });
 
   var band = document.getElementById('chateau-band');
   var section = document.getElementById('chateau');
@@ -275,5 +237,4 @@
   onScroll();
 })();
 </script>
-</body>
-</html>
+{% endblock %}

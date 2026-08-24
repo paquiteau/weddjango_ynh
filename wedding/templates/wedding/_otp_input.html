@@ -1,0 +1,9 @@
+{# Renders a 4-box OTP-style code entry synced to a hidden CharField. Usage: {% include 'wedding/_otp_input.html' with code_field=form.code %} #}
+<div class="otp-input-wrap">
+  <div class="otp-input">
+    {% for i in "1234" %}
+      <input type="text" inputmode="text" maxlength="1" class="otp-input__box" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Caractère {{ forloop.counter }} du code d'invitation">
+    {% endfor %}
+  </div>
+  {{ code_field }}
+</div>

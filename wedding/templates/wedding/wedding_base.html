@@ -1,0 +1,113 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Marine &amp; Pierre-Antoine{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Raleway:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'wedding/css/main.css' %}">
+{% block extra_head %}{% endblock %}
+</head>
+<body class="wedding-page">
+<div class="wedding-root">
+
+  <!-- NAV -->
+  <nav class="site-nav">
+    <a href="{% url 'homepage' %}#top" class="site-nav__brand">Marine &amp; Pierre-Antoine</a>
+    <button type="button" class="site-nav__toggle" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="site-nav-links">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="site-nav__links" id="site-nav-links">
+      <a href="{% url 'homepage' %}#deroule" class="site-nav__link">Le déroulé</a>
+      <a href="{% url 'homepage' %}#sejour" class="site-nav__link">Séjour &amp; accès</a>
+      <a href="{% url 'gift_list' %}" class="site-nav__link">Liste de Mariage</a>
+      <a href="{% url 'rsvp_lookup' %}" class="site-nav__link site-nav__link--cta">RSVP</a>
+    </div>
+  </nav>
+
+  <main class="wedding-main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <p class="site-footer__names">Marine &amp; Pierre-Antoine</p>
+    <p class="site-footer__date">10 avril 2027 · Château de la Ferté-Saint-Aubin</p>
+    <p class="site-footer__contact">Une question ? mariage.marine.pa@exemple.fr</p>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var navToggle = document.querySelector('.site-nav__toggle');
+  var navLinks = document.getElementById('site-nav-links');
+  navToggle.addEventListener('click', function () {
+    var open = navLinks.classList.toggle('site-nav__links--open');
+    navToggle.classList.toggle('site-nav__toggle--open', open);
+    navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  navLinks.querySelectorAll('a').forEach(function (link) {
+    link.addEventListener('click', function () {
+      navLinks.classList.remove('site-nav__links--open');
+      navToggle.classList.remove('site-nav__toggle--open');
+      navToggle.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  document.querySelectorAll('.otp-input-wrap').forEach(function (wrap) {
+    var hidden = wrap.querySelector('input[type="hidden"]');
+    var boxes = Array.prototype.slice.call(wrap.querySelectorAll('.otp-input__box'));
+    if (!hidden || !boxes.length) return;
+
+    function sync() {
+      hidden.value = boxes.map(function (box) { return box.value; }).join('');
+    }
+
+    function maybeSubmit() {
+      var form = wrap.closest('form');
+      if (form && boxes.every(function (box) { return box.value; })) {
+        form.requestSubmit ? form.requestSubmit() : form.submit();
+      }
+    }
+
+    (hidden.value || '').toUpperCase().split('').forEach(function (char, i) {
+      if (boxes[i]) boxes[i].value = char;
+    });
+
+    boxes.forEach(function (box, index) {
+      box.addEventListener('input', function () {
+        box.value = box.value.toUpperCase().slice(-1).replace(/[^A-Z0-9]/g, '');
+        sync();
+        if (box.value && boxes[index + 1]) {
+          boxes[index + 1].focus();
+        } else if (box.value && index === boxes.length - 1) {
+          maybeSubmit();
+        }
+      });
+      box.addEventListener('keydown', function (event) {
+        if (event.key === 'Backspace' && !box.value && boxes[index - 1]) {
+          boxes[index - 1].focus();
+        }
+      });
+      box.addEventListener('paste', function (event) {
+        event.preventDefault();
+        var pasted = (event.clipboardData || window.clipboardData).getData('text');
+        var chars = pasted.toUpperCase().replace(/[^A-Z0-9]/g, '').split('');
+        boxes.forEach(function (box, i) { box.value = chars[i] || ''; });
+        sync();
+        var next = boxes[Math.min(chars.length, boxes.length - 1)];
+        if (next) next.focus();
+        maybeSubmit();
+      });
+    });
+
+    sync();
+  });
+})();
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

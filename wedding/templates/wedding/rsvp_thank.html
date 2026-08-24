@@ -1,8 +1,12 @@
-{% extends 'wedding/base.html' %}
+{% extends 'wedding/wedding_base.html' %}
+
+{% block title %}Merci · Marine &amp; Pierre-Antoine{% endblock %}
+
 {% block content %}
-    <div class="text-center">
-        <h1>Thank You!</h1>
-        <p class="lead">Your RSVP has been recorded. We can't wait to see you!</p>
-        <a href="{% url 'homepage' %}" class="btn btn-secondary">Back to Site</a>
-    </div>
+<section class="page-hero page-hero--center">
+  <p class="section-kicker">RSVP</p>
+  <h1 class="section-title">Merci !</h1>
+  <p class="rsvp-text">Votre réponse a bien été enregistrée. Nous avons hâte de vous voir !</p>
+  <a href="{% url 'homepage' %}" class="hero__cta">Retour au site</a>
+</section>
 {% endblock %}

@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -110,6 +112,9 @@ TIME_ZONE = "Europe/Paris"
 USE_I18N = True
 
 USE_TZ = True
+
+# RSVP form closes after this date/time (matches the deadline advertised on the homepage).
+RSVP_DEADLINE = datetime(2027, 2, 10, 23, 59, 59, tzinfo=ZoneInfo(TIME_ZONE))
 
 
 # Static files (CSS, JavaScript, Images)

@@ -1,145 +1,239 @@
-{% extends 'wedding/base.html' %}
-{% load wedding_filter static %}
+{% extends 'wedding/wedding_base.html' %}
+{% load wedding_filter %}
+
+{% block title %}RSVP · {{ group.group_name }}{% endblock %}
 
 {% block content %}
-    <div class="row justify-content-center">
-        <div class="col-lg-10 col-xl-8">
-            <h1 class="text-center mb-4">RSVP for {{ group.group_name }}</h1>
-            <p class="lead text-center">Please take a moment to update your details and let us know your plans.</p>
+<section class="page-hero">
+  <p class="section-kicker">RSVP</p>
+  <h1 class="section-title">{{ group.group_name }}</h1>
+  <p class="rsvp-text">Merci de mettre à jour vos informations et de nous confirmer votre présence.</p>
+</section>
 
-            <form method="POST" novalidate>
-                {% csrf_token %}
-                
-                {# Display formset errors clearly at the top #}
-                {% if guest_formset.non_form_errors %}
-                    <div class="alert alert-danger" role="alert">
-                        <strong>Important:</strong> 
-                        {% for error in guest_formset.non_form_errors %}
-                            {{ error }}
-                        {% endfor %}
-                    </div>
-                {% endif %}
+<section class="section rsvp-form-section">
 
-                {# -------------------------------------------------------------------------------- #}
-                {# 1. GROUP CONTACT & ADDRESS SECTION #}
-                {# -------------------------------------------------------------------------------- #}
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-light">
-                        <h4 class="mb-0">Group Contact Information</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-12">
-                                <label class="form-label">{{ group_form.address_line_1.label }}</label>
-                                {{ group_form.address_line_1 }}
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">{{ group_form.address_line_2.label }}</label>
-                                {{ group_form.address_line_2 }}
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">{{ group_form.city.label }}</label>
-                                {{ group_form.city }}
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">{{ group_form.postal_code.label }}</label>
-                                {{ group_form.postal_code }}
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">{{ group_form.country.label }}</label>
-                                {{ group_form.country }}
-                            </div>
-                        </div>
-                        
-                        <div class="form-text mt-3">
-                            Please ensure your postal address is correct for thank-you notes!
-                        </div>
-                    </div>
-                </div>
+  {% if messages %}
+    {% for message in messages %}
+      <div class="form-notice {% if message.tags %}form-notice--{{ message.tags }}{% endif %}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
 
-                {# -------------------------------------------------------------------------------- #}
-                {# 2. INDIVIDUAL GUEST RSVP SECTION (FORMSET) #}
-                {# -------------------------------------------------------------------------------- #}
-                <h3 class="mb-3">Individual Guest Details and Attendance</h3>
-                {{ guest_formset.management_form }}
-                
-                {% for form in guest_formset %}
-                    <div class="card shadow-sm mb-3">
-                        <div class="card-header bg-secondary text-white">
-                            <h5 class="mb-0">{{ form.instance.first_name }} {{ form.instance.last_name }} 
-                                {% if form.instance.is_child %}<span class="badge bg-light text-secondary ms-2">Child</span>{% endif %}
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            {{ form.id }} {# Hidden Guest ID #}
-
-                            <div class="row g-3 mb-4">
-                                {# Personal Updatable Info (Email and Dietary) #}
-                                <div class="col-md-6">
-                                    <label class="form-label">{{ form.email.label }}</label>
-                                    {{ form.email }}
-                                    {% if form.email.errors %}
-                                        <div class="text-danger small">{{ form.email.errors }}</div>
-                                    {% endif %}
-                                    <small class="form-text">Required for updates and communication.</small>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">{{ form.dietary_restrictions.label }}</label>
-                                    {{ form.dietary_restrictions }}
-                                    <small class="form-text">e.g., Vegetarian, Gluten-free, Allergies.</small>
-                                </div>
-                            </div>
-                            
-                            <hr>
-                            
-                            {# Attendance Fields (Dynamically shown by the view) #}
-                            <h6 class="mb-3"> Est-ce que {{ form.instance.first_name }} sera là?</h6>
-                            <div class="row">
-                                {% for field_name in attendance_fields %}
-                                    {% with field=form|get_field:field_name %}
-                                        {% if field %}
-                                            <div class="col-md-4">
-                                                <div class="form-check form-switch">
-                                                    {{ field }}
-                                                    <label class="form-check-label" for="{{ field.id_for_label }}">
-                                                        {% if field_name == 'is_attending_ceremony' %}Ceremony{% endif %}
-                                                        {% if field_name == 'is_attending_cocktail' %}Cocktail Reception{% endif %}
-                                                        {% if field_name == 'is_attending_dinner' %}Dinner & Dancing{% endif %}
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        {% endif %}
-                                    {% endwith %}
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-
-                {# -------------------------------------------------------------------------------- #}
-                {# 3. GROUP FINAL REQUESTS AND SUBMISSION #}
-                {# -------------------------------------------------------------------------------- #}
-                <div class="card shadow-sm mb-4">
-                    <div class="card-body">
-                        <div class="form-check form-switch mb-3">
-                            {{ group_form.requests_sleeping }}
-                            <label class="form-check-label" for="{{ group_form.requests_sleeping.id_for_label }}">
-                                {{ group_form.requests_sleeping.label }}
-                            </label>
-                            <small class="form-text d-block"> Le nombre de lit est limité sur place, nous ferons au mieux.</small>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">{{ group_form.group_message.label }}</label>
-                            {{ group_form.group_message }}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-success btn-lg mt-3">Submit RSVP & Updates</button>
-                </div>
-            </form>
-        </div>
+  {% if is_closed %}
+    <div class="form-notice form-notice--error">
+      Les réponses sont closes depuis le 10 février 2027. Pour toute modification, merci de nous contacter directement.
     </div>
+  {% endif %}
+
+  <form method="POST" novalidate>
+    {% csrf_token %}
+
+    {% if guest_formset.non_form_errors %}
+      <div class="form-notice form-notice--error">
+        {% for error in guest_formset.non_form_errors %}{{ error }}{% endfor %}
+      </div>
+    {% endif %}
+
+    {# -------------------------------------------------------------------------------- #}
+    {# 1. GROUP CONTACT & ADDRESS SECTION #}
+    {# -------------------------------------------------------------------------------- #}
+    <div class="rsvp-card">
+      <h3 class="rsvp-card__title">Coordonnées du foyer</h3>
+      <div class="rsvp-field-grid">
+        <div class="rsvp-field rsvp-field--full">
+          <label class="rsvp-field__label">{{ group_form.address_line_1.label }}</label>
+          {{ group_form.address_line_1 }}
+        </div>
+        <div class="rsvp-field rsvp-field--full">
+          <label class="rsvp-field__label">{{ group_form.address_line_2.label }}</label>
+          {{ group_form.address_line_2 }}
+        </div>
+        <div class="rsvp-field">
+          <label class="rsvp-field__label">{{ group_form.city.label }}</label>
+          {{ group_form.city }}
+        </div>
+        <div class="rsvp-field">
+          <label class="rsvp-field__label">{{ group_form.postal_code.label }}</label>
+          {{ group_form.postal_code }}
+        </div>
+        <div class="rsvp-field">
+          <label class="rsvp-field__label">{{ group_form.country.label }}</label>
+          {{ group_form.country }}
+        </div>
+      </div>
+      <p class="rsvp-field__hint">Utile pour l'envoi de nos remerciements après le mariage.</p>
+    </div>
+
+    {# -------------------------------------------------------------------------------- #}
+    {# 2. INDIVIDUAL GUEST RSVP SECTION (FORMSET, as tabs — one per guest) #}
+    {# -------------------------------------------------------------------------------- #}
+    <h2 class="rsvp-section-title">Chaque membre du foyer</h2>
+    {{ guest_formset.management_form }}
+
+    <div class="rsvp-tabs" data-rsvp-tabs>
+      <div class="rsvp-tabs__list" role="tablist">
+        {% for form in guest_formset %}
+          <button type="button"
+                  class="rsvp-tab{% if form.errors %} rsvp-tab--error{% endif %}"
+                  data-tab-target="{{ forloop.counter0 }}"
+                  role="tab">
+            {{ form.instance.first_name }}
+            {% if form.errors %}<span class="rsvp-tab__dot" aria-hidden="true"></span>{% endif %}
+          </button>
+        {% endfor %}
+      </div>
+
+      {% for form in guest_formset %}
+        <div class="rsvp-card rsvp-tabpanel" data-tab-panel="{{ forloop.counter0 }}" data-guest-card role="tabpanel">
+          <h3 class="rsvp-card__title">{{ form.instance.first_name }} {{ form.instance.last_name }}</h3>
+          {{ form.id }}
+
+          <div class="rsvp-field-grid">
+            <div class="rsvp-field">
+              <label class="rsvp-field__label">{{ form.status.label }}</label>
+              {{ form.status }}
+            </div>
+            <div class="rsvp-field">
+              <label class="rsvp-field__label">{{ form.email.label }}</label>
+              {{ form.email }}
+              {% if form.email.errors %}<div class="rsvp-field__error">{{ form.email.errors|join:" " }}</div>{% endif %}
+            </div>
+            <div class="rsvp-field rsvp-field--full">
+              <label class="rsvp-field__label">{{ form.dietary_restrictions.label }}</label>
+              {{ form.dietary_restrictions }}
+              <p class="rsvp-field__hint">Ex : végétarien, sans gluten, allergie aux fruits à coque…</p>
+            </div>
+            <div class="rsvp-field rsvp-field--full" data-babysitting-field>
+              <label class="rsvp-field__label">{{ form.babysitting_notes.label }}</label>
+              {{ form.babysitting_notes }}
+              <p class="rsvp-field__hint">Besoins particuliers pour la garde d'enfant (âge, horaires, allergies, etc.).</p>
+            </div>
+            <div class="rsvp-field rsvp-field--full">
+              <label class="rsvp-field__label">{{ form.song_request.label }}</label>
+              {{ form.song_request }}
+              <p class="rsvp-field__hint">{{ form.song_request.help_text }}</p>
+            </div>
+          </div>
+
+          {% if attendance_fields %}
+            <hr class="rsvp-divider">
+            <h4 class="rsvp-card__subtitle">{{ form.instance.first_name }} sera présent(e) à :</h4>
+            <div class="rsvp-attendance-grid">
+              {% for field_name in attendance_fields %}
+                {% with field=form|get_field:field_name %}
+                  {% if field %}
+                    <label class="rsvp-checkbox">
+                      {{ field }}
+                      <span>
+                        {% if field_name == 'is_attending_mairie' %}Mairie{% endif %}
+                        {% if field_name == 'is_attending_ceremony' %}Cérémonie{% endif %}
+                        {% if field_name == 'is_attending_cocktail' %}Cocktail{% endif %}
+                        {% if field_name == 'is_attending_dinner' %}Dîner &amp; Soirée{% endif %}
+                      </span>
+                    </label>
+                  {% endif %}
+                {% endwith %}
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="rsvp-tab-nav">
+            <button type="button" class="rsvp-tab-nav__btn" data-tab-prev>&larr; Précédent</button>
+            <button type="button" class="rsvp-tab-nav__btn" data-tab-next>Suivant &rarr;</button>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    {# -------------------------------------------------------------------------------- #}
+    {# 3. GROUP FINAL REQUESTS AND SUBMISSION #}
+    {# -------------------------------------------------------------------------------- #}
+    <div class="rsvp-card">
+      <h3 class="rsvp-card__title">Logement sur place</h3>
+      <label class="rsvp-checkbox rsvp-checkbox--block">
+        {{ group_form.requests_sleeping_friday }}
+        <span>{{ group_form.requests_sleeping_friday.label }}</span>
+      </label>
+      <label class="rsvp-checkbox rsvp-checkbox--block" style="margin-top: 0.75rem;">
+        {{ group_form.requests_sleeping_saturday }}
+        <span>{{ group_form.requests_sleeping_saturday.label }}</span>
+      </label>
+      <p class="rsvp-field__hint">Le nombre de lits est limité sur place, nous ferons au mieux.</p>
+
+      <div class="rsvp-field rsvp-field--full" style="margin-top: 1.5rem;">
+        <label class="rsvp-field__label">{{ group_form.group_message.label }}</label>
+        {{ group_form.group_message }}
+        <p class="rsvp-field__hint">{{ group_form.group_message.help_text }}</p>
+      </div>
+    </div>
+
+    {% if not is_closed %}
+      <div class="rsvp-submit-row">
+        <button type="submit" class="hero__cta">Envoyer ma réponse</button>
+      </div>
+    {% endif %}
+  </form>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  // Per-guest babysitting field toggle, keyed off each guest's status select.
+  document.querySelectorAll('[data-guest-card]').forEach(function (card) {
+    var statusField = card.querySelector('select[name$="-status"]');
+    var babysittingField = card.querySelector('[data-babysitting-field]');
+    if (!statusField || !babysittingField) return;
+
+    function sync() {
+      babysittingField.style.display = statusField.value === 'B' ? '' : 'none';
+    }
+    statusField.addEventListener('change', sync);
+    sync();
+  });
+
+  // Tabs: one panel per guest, progressively enhanced (all panels are visible without JS).
+  var tabsRoot = document.querySelector('[data-rsvp-tabs]');
+  if (!tabsRoot) return;
+
+  var tabs = Array.prototype.slice.call(tabsRoot.querySelectorAll('[data-tab-target]'));
+  var panels = Array.prototype.slice.call(tabsRoot.querySelectorAll('[data-tab-panel]'));
+  if (tabs.length <= 1) return;
+
+  tabsRoot.classList.add('js-enabled');
+
+  function activate(index, scrollToTop) {
+    tabs.forEach(function (tab) {
+      tab.classList.toggle('rsvp-tab--active', tab.dataset.tabTarget === String(index));
+    });
+    panels.forEach(function (panel) {
+      panel.classList.toggle('rsvp-tabpanel--active', panel.dataset.tabPanel === String(index));
+    });
+    if (scrollToTop) {
+      tabsRoot.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      activate(tab.dataset.tabTarget, true);
+    });
+  });
+
+  panels.forEach(function (panel, i) {
+    var prev = panel.querySelector('[data-tab-prev]');
+    var next = panel.querySelector('[data-tab-next]');
+    if (prev) {
+      if (i === 0) { prev.style.visibility = 'hidden'; }
+      prev.addEventListener('click', function () { activate(i - 1, true); });
+    }
+    if (next) {
+      if (i === panels.length - 1) { next.style.visibility = 'hidden'; }
+      next.addEventListener('click', function () { activate(i + 1, true); });
+    }
+  });
+
+  var firstErrorTab = tabsRoot.querySelector('.rsvp-tab--error');
+  activate(firstErrorTab ? firstErrorTab.dataset.tabTarget : 0, false);
+})();
+</script>
 {% endblock %}

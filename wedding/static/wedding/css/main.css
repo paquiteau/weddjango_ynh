@@ -259,6 +259,7 @@ body.wedding-page {
 /* Château parallax reveal */
 .chateau-reveal {
   position: relative;
+  z-index: 1;
   height: 38vh;
   background: linear-gradient(180deg, #d7e8d510 0%, var(--color-bg-alt) 50%);
   overflow: hidden;
@@ -284,6 +285,11 @@ body.wedding-page {
   padding: 6rem 2rem;
 }
 .section--tight { padding: 2rem 2rem 6rem; }
+.section-bg--alt,
+.section-bg--deep {
+  position: relative;
+  z-index: 1;
+}
 .section-bg--alt { background: var(--color-bg-alt); }
 .section-bg--deep { background: var(--color-bg-deep); }
 
@@ -472,6 +478,8 @@ body.wedding-page {
 
 /* RSVP */
 .rsvp-section {
+  position: relative;
+  z-index: 1;
   background: var(--color-bg-alt);
   text-align: center;
   padding: 7rem 2rem;
@@ -555,4 +563,261 @@ body.wedding-page {
 @media (max-width: 640px) {
   .chateau-reveal { height: 22vh; }
   .chateau-reveal__band { top: 0; }
+}
+
+/* Interior page header (RSVP, thank-you...) */
+.page-hero {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 8rem 2rem 2rem;
+  text-align: center;
+}
+.page-hero--center { padding-bottom: 6rem; }
+.page-hero .section-title { margin-bottom: 0.75rem; }
+
+/* RSVP lookup form (homepage stub + standalone lookup page) */
+.rsvp-lookup-form { max-width: 420px; margin: 0 auto; }
+.rsvp-lookup-form__row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.rsvp-lookup-form__row input {
+  flex: 1 1 200px;
+}
+
+.otp-input-wrap { display: flex; }
+.otp-input {
+  display: flex;
+  gap: 0.6rem;
+}
+.otp-input__box {
+  width: 3rem;
+  height: 3.5rem;
+  padding: 0;
+  text-align: center;
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-line);
+  border-radius: 6px;
+}
+.otp-input__box:focus {
+  outline: none;
+  border-color: var(--color-accent-green);
+}
+
+/* Notices / alerts */
+.form-notice {
+  max-width: 720px;
+  margin: 0 auto 1.5rem;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.form-notice--error {
+  background: #f8e6e6;
+  color: #8a3b3b;
+  border: 1px solid #e3b3b3;
+}
+.form-notice--success {
+  background: var(--color-bg-deep);
+  color: var(--color-accent-green-dark);
+  border: 1px solid var(--color-line);
+}
+
+/* RSVP form */
+.rsvp-form-section { max-width: 780px; }
+.rsvp-section-title {
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  font-weight: 400;
+  color: var(--color-text);
+  margin: 3rem 0 1.5rem;
+}
+.rsvp-card {
+  background: var(--color-white);
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+}
+.rsvp-card__title {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: var(--color-text);
+  margin-bottom: 1.25rem;
+}
+.rsvp-card__subtitle {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin-bottom: 1rem;
+}
+.rsvp-divider {
+  border: none;
+  border-top: 1px solid var(--color-bg-alt);
+  margin: 1.5rem 0;
+}
+.rsvp-field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+.rsvp-field { display: flex; flex-direction: column; }
+.rsvp-field--full { grid-column: 1 / -1; }
+.rsvp-field__label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 0.4rem;
+}
+.rsvp-field__hint {
+  font-size: 0.78rem;
+  color: var(--color-text-faint);
+  margin-top: 0.4rem;
+}
+.rsvp-field__error {
+  font-size: 0.8rem;
+  color: #8a3b3b;
+  margin-top: 0.3rem;
+}
+
+/* Inputs */
+.rsvp-card input[type="text"],
+.rsvp-card input[type="email"],
+.rsvp-card select,
+.rsvp-card textarea,
+.rsvp-lookup-form input[type="text"] {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-line);
+  border-radius: 6px;
+  padding: 0.65rem 0.85rem;
+}
+.rsvp-card input:disabled,
+.rsvp-card select:disabled,
+.rsvp-card textarea:disabled {
+  background: var(--color-bg-alt);
+  color: var(--color-text-muted);
+}
+.rsvp-card input:focus,
+.rsvp-card select:focus,
+.rsvp-card textarea:focus,
+.rsvp-lookup-form input:focus {
+  outline: none;
+  border-color: var(--color-accent-green);
+}
+
+/* Checkboxes */
+.rsvp-attendance-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+}
+.rsvp-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  cursor: pointer;
+}
+.rsvp-checkbox input[type="checkbox"] {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--color-accent-green);
+}
+.rsvp-checkbox--block { display: flex; }
+
+/* Guest tabs */
+.rsvp-tabs { scroll-margin-top: 6rem; }
+.rsvp-tabs__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+.rsvp-tab {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  background: var(--color-white);
+  border: 1px solid var(--color-line);
+  border-radius: 20px;
+  padding: 0.55rem 1.15rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.rsvp-tab--active {
+  color: var(--color-white);
+  background: var(--color-accent-green);
+  border-color: var(--color-accent-green);
+}
+.rsvp-tab__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent-rose);
+  display: inline-block;
+}
+.rsvp-tabs.js-enabled .rsvp-tabpanel { display: none; }
+.rsvp-tabs.js-enabled .rsvp-tabpanel.rsvp-tabpanel--active { display: block; }
+.rsvp-tabs .rsvp-tabpanel + .rsvp-tabpanel { margin-top: 0; }
+.rsvp-tabpanel { margin-bottom: 1.5rem; }
+
+.rsvp-tab-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-bg-alt);
+}
+.rsvp-tabs:not(.js-enabled) .rsvp-tab-nav,
+.rsvp-tabs:not(.js-enabled) .rsvp-tabs__list {
+  display: none;
+}
+.rsvp-tab-nav__btn {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent-green-dark);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.3rem 0;
+}
+
+.rsvp-submit-row {
+  text-align: center;
+  margin: 2.5rem 0 4rem;
+}
+.rsvp-submit-row .hero__cta,
+.rsvp-lookup-form .hero__cta {
+  border: none;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .rsvp-field-grid { grid-template-columns: 1fr; }
+  .page-hero { padding-top: 6.5rem; }
 }

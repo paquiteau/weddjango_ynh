@@ -1,0 +1,22 @@
+{% extends 'wedding/wedding_base.html' %}
+
+{% block title %}RSVP · Marine &amp; Pierre-Antoine{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <p class="section-kicker">RSVP</p>
+  <h1 class="section-title">Retrouvez votre invitation</h1>
+  <p class="rsvp-text">Entrez le code personnel reçu avec votre faire-part (par email ou via le QR code).</p>
+
+  <form method="POST" class="rsvp-lookup-form" novalidate>
+    {% csrf_token %}
+    {% if form.code.errors %}
+      <div class="form-notice form-notice--error">{{ form.code.errors|join:" " }}</div>
+    {% endif %}
+    <div class="rsvp-lookup-form__row">
+      {% include 'wedding/_otp_input.html' with code_field=form.code %}
+      <button type="submit" class="hero__cta">Accéder à mon RSVP</button>
+    </div>
+  </form>
+</section>
+{% endblock %}
