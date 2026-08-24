@@ -1,12 +1,279 @@
-{% extends 'wedding/base.html' %}
-{% block content %}
-    <div class="text-center">
-        <h1>Welcome to Our Wedding!</h1>
-        <p class="lead">We're so excited to celebrate with you.</p>
-        <hr class="my-4">
-        <h2>Schedule</h2>
-        <p>Ceremony: 4:00 PM</p>
-        <p>Cocktail: 5:00 PM</p>
-        <p>Dinner: 6:30 PM</p>
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marine &amp; Pierre-Antoine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Raleway:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'wedding/css/main.css' %}">
+</head>
+<body class="wedding-page">
+<div class="wedding-root">
+
+  <!-- NAV -->
+  <nav class="site-nav">
+    <a href="#top" class="site-nav__brand">Marine &amp; Pierre-Antoine</a>
+    <button type="button" class="site-nav__toggle" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="site-nav-links">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="site-nav__links" id="site-nav-links">
+      <a href="#deroule" class="site-nav__link">Le déroulé</a>
+      <a href="#sejour" class="site-nav__link">Séjour &amp; accès</a>
+      <a href="#liste" class="site-nav__link">Liste de Mariage</a>
+      <a href="#rsvp" class="site-nav__link site-nav__link--cta">RSVP</a>
     </div>
-{% endblock %}
+  </nav>
+
+  <!-- HERO -->
+  <header id="top" class="hero">
+    <div class="hero__inner">
+      <div class="hero__names-col">
+
+        <h1 class="hero__title">Marine<br>&amp;<br>Pierre-Antoine</h1>
+
+        <!--TODO: Use asset leafs.svg for separation. -->
+
+        <p class="hero__date">10 Avril 2027 · Château de la Ferté-Saint-Aubin</p>
+
+        <!-- countdown -->
+        <div id="countdown" class="countdown" data-target="2027-04-10T15:00:00">
+          <div class="countdown__unit">
+            <span data-unit="days" class="countdown__value">–</span>
+            <span class="countdown__label">jours</span>
+          </div>
+          <span class="countdown__sep">·</span>
+          <div class="countdown__unit">
+            <span data-unit="hours" class="countdown__value">–</span>
+            <span class="countdown__label">heures</span>
+          </div>
+          <span class="countdown__sep">·</span>
+          <div class="countdown__unit">
+            <span data-unit="mins" class="countdown__value">–</span>
+            <span class="countdown__label">minutes</span>
+          </div>
+        </div>
+
+        <a href="#rsvp" class="hero__cta">Confirmer ma présence</a>
+      </div>
+
+      <!-- RIGHT: flower-wreathed couple photo -->
+      <div class="hero__photo">
+        <img src="{% static 'wedding/img/charlottenburg_nice.png' %}" alt="Marine &amp; Pierre-Antoine">
+      </div>
+
+    </div>
+  </header>
+
+  <main class="wedding-main">
+
+  <!-- CHÂTEAU REVEAL -->
+    <section id="chateau" class="chateau-reveal">
+        <div id="chateau-band" class="chateau-reveal__band">
+            <img src="{% static 'wedding/img/chateau_sky_removed_highres_narrow.png' %}" alt="Château de la Ferté-Saint-Aubin">
+        </div>
+    </section>
+
+  <!-- WELCOME LINE -->
+    <!-- <div style="background-color:#d7e8d5;"> -->
+      <!-- <section style="max-width:720px;margin:0 auto;padding:6rem 2rem 4rem;text-align:center;">
+           <p style="font-family:'Raleway',sans-serif;font-weight:500;font-size:0.7rem;letter-spacing:0.3em;text-transform:uppercase;color:#b07088;margin-bottom:1.5rem;">Nous nous marions</p>
+           <p style="font-family:'Cormorant Garamond',Georgia,serif;font-weight:300;font-size:clamp(1.5rem,3.4vw,2.25rem);line-height:1.4;color:#2d2a26;">Nous avons le plaisir de vous inviter à célébrer cette étape de vie avec nous.</p>
+           </section> -->
+  <div class="section-bg--alt">
+  <section id="deroule" class="section section--tight">
+    <div class="deroule-grid">
+        <div class="ph-slot deroule-grid__image">
+            <img src="{% static 'wedding/img/hands.png' %}" alt="Marine &amp; Pierre-Antoine">
+        </div>
+      <div>
+        <p class="section-kicker">Le 10 avril 2027</p>
+        <h2 class="section-title deroule-grid__title">Déroulé de la journée</h2>
+        <div class="timeline">
+
+          <div class="timeline-item">
+            <div class="timeline-item__icon"><img src="{% static 'wedding/img/icons/mairie.svg' %}" alt=""></div>
+            <div class="timeline-item__body">
+              <div class="timeline-item__time">15h20</div>
+              <h3 class="timeline-item__title">Cérémonie civile</h3>
+              <p class="timeline-item__text"> À l'Hôtel Groslot d'Orléans, pour la famille proche uniquement.</p>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-item__icon"><img src="{% static 'wedding/img/icons/eglise.svg' %}" alt=""></div>
+            <div class="timeline-item__body">
+              <div class="timeline-item__time">17h</div>
+              <h3 class="timeline-item__title">Cérémonie religieuse</h3>
+              <p class="timeline-item__text"> Messe à l'église St Michel de La Ferté Saint-Aubin</p>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-item__icon"><img src="{% static 'wedding/img/icons/cocktail.svg' %}" alt=""></div>
+            <div class="timeline-item__body">
+              <div class="timeline-item__time">18h30</div>
+              <h3 class="timeline-item__title">Cocktail &amp; vin d'honneur</h3>
+              <p class="timeline-item__text">Dans le parc du château, juste à côté de l'église.</p>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-item__icon"><img src="{% static 'wedding/img/icons/meal.svg' %}" alt=""></div>
+            <div class="timeline-item__body">
+              <div class="timeline-item__time">20h30</div>
+              <h3 class="timeline-item__title">Dîner</h3>
+              <p class="timeline-item__text">Dans l'orangerie du Château.</p>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-item__icon"><img src="{% static 'wedding/img/icons/party.svg' %}" alt=""></div>
+            <div class="timeline-item__body">
+              <div class="timeline-item__time">22h00</div>
+              <h3 class="timeline-item__title">Soirée dansante</h3>
+              <p class="timeline-item__text">Aussi longtemps qu'ils vous plaira.</p>
+            </div>
+          </div>
+
+          <div class="timeline-item timeline-item--highlight">
+            <div class="timeline-item__icon"><img src="{% static 'wedding/img/icons/brunch.svg' %}" alt=""></div>
+            <div class="timeline-item__body">
+              <div class="timeline-item__time">Le lendemain · 11h00</div>
+              <h3 class="timeline-item__title">Brunch</h3>
+              <p class="timeline-item__text">Pour ceux qui restent, un brunch tranquille.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  </div>
+
+
+  <section id="sejour" class="section-bg--deep">
+    <div class="section">
+      <div class="section-header">
+        <p class="section-kicker">Pour préparer votre venue</p>
+        <h2 class="section-title">Séjour &amp; accès</h2>
+      </div>
+
+      <div class="sejour-grid">
+        <!-- left: accommodation -->
+        <div class="sejour-col">
+          <div class="info-card">
+            <p class="info-card__eyebrow">Sur place</p>
+            <h3 class="info-card__title">Chambres au château</h3>
+            <p class="info-card__text">Un nombre limité de chambres est disponible dans les dépendances du château, attribuées en priorité à la famille. Indiquez votre souhait dans le formulaire de réponse.</p>
+          </div>
+          <div class="info-card">
+            <p class="info-card__eyebrow">À proximité</p>
+            <h3 class="info-card__title">Hôtels &amp; gîtes</h3>
+            <p class="info-card__text">Plusieurs hébergements à La Ferté-Saint-Aubin, Orléans ou Lamotte-Beuvron (25 min).</p>
+          </div>
+        </div>
+
+        <!-- right: access + photo -->
+        <div class="sejour-col">
+          <img src="{% static 'wedding/img/chateau-entree.jpg' %}" alt="Château de la Ferté-Saint-Aubin" class="sejour-photo">
+          <div class="info-card">
+            <p class="info-card__eyebrow">Comment venir</p>
+            <div class="access-list">
+              <div class="access-row">
+                <span class="access-row__mode">En train</span>
+                <span class="access-row__detail">Gare de La Ferté-Saint-Aubin (ligne TER), à 10 min du château.</span>
+              </div>
+              <div class="access-divider"></div>
+              <div class="access-row">
+                <span class="access-row__mode">En voiture</span>
+                <span class="access-row__detail">À 1h30 de Paris par l'A10 et A71 sortie Orléans-Sud. Parking sur place.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="rsvp" class="rsvp-section">
+      <!-- TODO: Use svg flower divider here also -->
+    <h2 class="rsvp-title">Merci de nous confirmer votre présence</h2>
+    <p class="rsvp-text">avant le 10 février 2027 grâce au lien personnel reçu avec votre faire-part.</p>
+  </section>
+
+  <footer class="site-footer">
+    <p class="site-footer__names">Marine &amp; Pierre-Antoine</p>
+    <p class="site-footer__date">10 avril 2027 · Château de la Ferté-Saint-Aubin</p>
+    <p class="site-footer__contact">Une question ? mariage.marine.pa@exemple.fr</p>
+  </footer>
+
+  </main>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  var el = document.getElementById('countdown');
+  var target = new Date(el.dataset.target).getTime();
+  var daysEl = el.querySelector('[data-unit="days"]');
+  var hoursEl = el.querySelector('[data-unit="hours"]');
+  var minsEl = el.querySelector('[data-unit="mins"]');
+
+  function tick() {
+    var diff = Math.max(0, target - Date.now());
+    var days = Math.floor(diff / 86400000);
+    var hours = Math.floor((diff % 86400000) / 3600000);
+    var mins = Math.floor((diff % 3600000) / 60000);
+    daysEl.textContent = String(days);
+    hoursEl.textContent = String(hours).padStart(2, '0');
+    minsEl.textContent = String(mins).padStart(2, '0');
+  }
+  tick();
+  setInterval(tick, 30000);
+
+  var navToggle = document.querySelector('.site-nav__toggle');
+  var navLinks = document.getElementById('site-nav-links');
+  navToggle.addEventListener('click', function () {
+    var open = navLinks.classList.toggle('site-nav__links--open');
+    navToggle.classList.toggle('site-nav__toggle--open', open);
+    navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  navLinks.querySelectorAll('a').forEach(function (link) {
+    link.addEventListener('click', function () {
+      navLinks.classList.remove('site-nav__links--open');
+      navToggle.classList.remove('site-nav__toggle--open');
+      navToggle.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  var band = document.getElementById('chateau-band');
+  var section = document.getElementById('chateau');
+  var parallaxQuery = window.matchMedia('(max-width: 640px)');
+  var ticking = false;
+  function onScroll() {
+    if (parallaxQuery.matches) {
+      band.style.transform = 'none';
+      return;
+    }
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () {
+      var rect = section.getBoundingClientRect();
+      var vh = window.innerHeight || document.documentElement.clientHeight;
+      var h = section.offsetHeight;
+      var progress = Math.max(0, Math.min(1, (vh - rect.top) / (vh + h)));
+      var shift = (0.5 - progress) * 0.30 * h;
+      band.style.transform = 'translate3d(0,' + shift + 'px,0)';
+      ticking = false;
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+  onScroll();
+})();
+</script>
+</body>
+</html>
