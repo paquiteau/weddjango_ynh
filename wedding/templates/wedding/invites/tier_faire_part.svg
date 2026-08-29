@@ -1,0 +1,3 @@
+{% extends "wedding/invites/_invite_base.svg" %}
+{% block bg_color %}#faf6ef{% endblock %}
+{% block tier_label %}Faire-Part{% endblock %}

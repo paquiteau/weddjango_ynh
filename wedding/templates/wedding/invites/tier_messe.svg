@@ -1,0 +1,3 @@
+{% extends "wedding/invites/_invite_base.svg" %}
+{% block bg_color %}#f2f0e6{% endblock %}
+{% block tier_label %}Messe &amp; Faire-Part{% endblock %}

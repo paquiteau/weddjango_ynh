@@ -23,8 +23,8 @@ TIER_MAP = {
     InvitationTier.FAIRE_PART: [], # Announcement Only - no attendance fields visible
     InvitationTier.MESSE: ['is_attending_ceremony'],
     InvitationTier.COCKTAIL: ['is_attending_ceremony', 'is_attending_cocktail'],
-    InvitationTier.REPAS: ['is_attending_ceremony', 'is_attending_cocktail', 'is_attending_dinner'],
-    InvitationTier.MAIRIE: ['is_attending_mairie', 'is_attending_ceremony', 'is_attending_cocktail', 'is_attending_dinner'],
+    InvitationTier.REPAS: ['is_attending_ceremony', 'is_attending_cocktail', 'is_attending_dinner', 'is_attending_brunch'],
+    InvitationTier.MAIRIE: ['is_attending_mairie', 'is_attending_ceremony', 'is_attending_cocktail', 'is_attending_dinner', 'is_attending_brunch'],
 }
 
 def rsvp_view(request: HttpRequest, invitation_code: str) -> HttpResponse:

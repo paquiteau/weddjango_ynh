@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1050" height="1485" viewBox="0 0 1050 1485">
+  <rect width="1050" height="1485" fill="{% block bg_color %}#faf6ef{% endblock %}"/>
+
+  <text x="525" y="220" text-anchor="middle" font-family="serif" font-size="48" fill="#2b2b2b">{{ group.group_name }}</text>
+
+  <text x="525" y="290" text-anchor="middle" font-family="serif" font-size="28" fill="#555555">{% block tier_label %}Faire-Part{% endblock %}</text>
+
+  {% if group.address_line_1 %}
+  <text x="525" y="360" text-anchor="middle" font-family="serif" font-size="20" fill="#555555">{{ group.address_line_1 }}</text>
+  {% endif %}
+  {% if group.address_line_2 %}
+  <text x="525" y="390" text-anchor="middle" font-family="serif" font-size="20" fill="#555555">{{ group.address_line_2 }}</text>
+  {% endif %}
+  {% if group.city %}
+  <text x="525" y="420" text-anchor="middle" font-family="serif" font-size="20" fill="#555555">{{ group.postal_code }} {{ group.city }}, {{ group.country }}</text>
+  {% endif %}
+
+  <text x="525" y="500" text-anchor="middle" font-family="serif" font-size="24" fill="#2b2b2b">Invités :</text>
+  <text x="525" y="540" text-anchor="middle" font-family="serif" font-size="20" fill="#2b2b2b">
+    {% for guest in guests %}<tspan x="525" dy="{% if forloop.first %}0{% else %}30{% endif %}">{{ guest.first_name }} {{ guest.last_name }}</tspan>{% endfor %}
+  </text>
+
+  <image x="375" y="1100" width="300" height="300" href="{{ qr_data_uri }}"/>
+  <text x="525" y="1430" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#777777">{{ rsvp_url }}</text>
+  <text x="525" y="1455" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#777777">Code : {{ group.invitation_code }}</text>
+</svg>

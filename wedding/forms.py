@@ -5,7 +5,9 @@ from .models import Group, Guest
 
 class GuestInlineFormSet(BaseInlineFormSet):
     """
-    Custom formset to enforce that at least one guest in the group has an email address.
+    Formset used by the guest-facing RSVP form to enforce that at least one
+    guest in the group has an email address. Not used in the admin, so
+    groups/guests can be created there without an email set yet.
     """
     def clean(self):
         # 1. Call the parent clean method first
@@ -37,14 +39,19 @@ class GuestInlineFormSet(BaseInlineFormSet):
             )
 
 class GroupRSVPForm(ModelForm):
-    """Form for guests to update group-level information."""
+    """Form for guests to update group-level information.
+
+    Address fields are optional on the Group model (so groups can be created
+    in the admin before the guest has replied), but required here since the
+    guest must provide them when submitting their RSVP.
+    """
     class Meta:
         model = Group
         fields = [
-            'address_line_1', 
-            'address_line_2', 
-            'city', 
-            'postal_code', 
+            'address_line_1',
+            'address_line_2',
+            'city',
+            'postal_code',
             'country',
             'requests_sleeping_friday',
             'requests_sleeping_saturday',
@@ -57,6 +64,11 @@ class GroupRSVPForm(ModelForm):
         widgets = {
             'group_message': forms.Textarea(attrs={'rows': 3}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name in ('address_line_1', 'city', 'postal_code', 'country'):
+            self.fields[field_name].required = True
 
 # --- NEW: Form for Individual Guest RSVP/Update ---
 class GuestRSVPForm(ModelForm):
@@ -75,6 +87,7 @@ class GuestRSVPForm(ModelForm):
             'is_attending_mairie',
             'is_attending_cocktail',
             'is_attending_dinner',
+            'is_attending_brunch',
         ]
         # Make the attendance fields checkboxes instead of generic booleans
         widgets = {
@@ -82,6 +95,7 @@ class GuestRSVPForm(ModelForm):
             'is_attending_mairie': forms.CheckboxInput(),
             'is_attending_cocktail': forms.CheckboxInput(),
             'is_attending_dinner': forms.CheckboxInput(),
+            'is_attending_brunch': forms.CheckboxInput(),
             'babysitting_notes': forms.Textarea(attrs={'rows': 2}),
         }
 

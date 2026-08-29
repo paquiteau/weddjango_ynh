@@ -632,13 +632,17 @@ body.wedding-page {
 }
 
 /* RSVP form */
-.rsvp-form-section { max-width: 780px; }
+.rsvp-form-section {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
 .rsvp-section-title {
   font-family: var(--font-serif);
   font-size: 1.75rem;
   font-weight: 400;
   color: var(--color-text);
-  margin: 3rem 0 1.5rem;
+  margin: 1rem 0 .5rem;
 }
 .rsvp-card {
   background: var(--color-white);

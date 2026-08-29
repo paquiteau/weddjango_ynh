@@ -33,13 +33,15 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    # "wedding" must come before "django.contrib.admin" so its templates
+    # (e.g. admin/base_site.html) take precedence over the stock admin ones.
+    "wedding",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "wedding",
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,129 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<style>
+  .dash-grid { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; }
+  .dash-card { background: var(--body-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 16px 20px; min-width: 160px; }
+  .dash-card__value { font-size: 28px; font-weight: 600; display: block; }
+  .dash-card__label { color: var(--body-quiet-color); }
+  .dash-section { margin-bottom: 32px; }
+  .dash-table { width: 100%; border-collapse: collapse; }
+  .dash-table th, .dash-table td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border-color); }
+  .dash-empty { color: var(--body-quiet-color); font-style: italic; }
+</style>
+
+<h1>Tableau de bord RSVP</h1>
+
+<div class="dash-grid">
+  <div class="dash-card"><span class="dash-card__value">{{ total_groups }}</span><span class="dash-card__label">Groupes invités</span></div>
+  <div class="dash-card"><span class="dash-card__value">{{ total_guests }}</span><span class="dash-card__label">Invités au total</span></div>
+  <div class="dash-card"><span class="dash-card__value">{{ submitted_groups }} / {{ total_groups }}</span><span class="dash-card__label">Groupes ayant répondu ({{ submission_rate }}%)</span></div>
+  <div class="dash-card"><span class="dash-card__value">{{ pending_groups }}</span><span class="dash-card__label">Groupes en attente de réponse</span></div>
+</div>
+
+<div class="dash-section">
+  <h2>Présence par événement</h2>
+  <table class="dash-table">
+    <thead>
+      <tr>
+        <th>Événement</th>
+        <th>Total présents</th>
+        {% for code, label in status_labels_items %}<th>{{ label }}</th>{% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for stat in event_stats %}
+      <tr>
+        <td>{{ stat.label }}</td>
+        <td>{{ stat.total }}</td>
+        {% for status_label, count in stat.by_status.items %}<td>{{ count }}</td>{% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="dash-section">
+  <h2>Répartition par formule d'invitation</h2>
+  <table class="dash-table">
+    <thead><tr><th>Formule</th><th>Groupes</th><th>Ayant répondu</th></tr></thead>
+    <tbody>
+      {% for row in tier_breakdown %}
+      <tr><td>{{ row.label }}</td><td>{{ row.total }}</td><td>{{ row.submitted }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="dash-section">
+  <h2>Hébergement sur place</h2>
+  <p>Vendredi → samedi : <strong>{{ sleeping_friday_count }}</strong> groupe(s) &nbsp;|&nbsp;
+     Samedi → dimanche : <strong>{{ sleeping_saturday_count }}</strong> groupe(s)</p>
+</div>
+
+<div class="dash-section">
+  <h2>Allergies &amp; régimes alimentaires ({{ dietary_guests|length }})</h2>
+  <p><a href="{% url 'admin:export_catering_csv' %}" class="button">Exporter la liste traiteur (CSV)</a></p>
+  {% if dietary_guests %}
+  <table class="dash-table">
+    <thead><tr><th>Groupe</th><th>Invité</th><th>Détail</th></tr></thead>
+    <tbody>
+      {% for guest in dietary_guests %}
+      <tr><td>{{ guest.group.group_name }}</td><td>{{ guest.first_name }} {{ guest.last_name }}</td><td>{{ guest.dietary_restrictions }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="dash-empty">Aucune allergie signalée.</p>{% endif %}
+</div>
+
+<div class="dash-section">
+  <h2>Besoins de baby-sitting ({{ babysitting_guests|length }})</h2>
+  {% if babysitting_guests %}
+  <table class="dash-table">
+    <thead><tr><th>Groupe</th><th>Enfant</th><th>Notes</th></tr></thead>
+    <tbody>
+      {% for guest in babysitting_guests %}
+      <tr><td>{{ guest.group.group_name }}</td><td>{{ guest.first_name }} {{ guest.last_name }}</td><td>{{ guest.babysitting_notes }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="dash-empty">Aucun besoin signalé.</p>{% endif %}
+</div>
+
+<div class="dash-section">
+  <h2>Chansons demandées ({{ song_requests|length }})</h2>
+  {% if song_requests %}
+  <table class="dash-table">
+    <thead><tr><th>Groupe</th><th>Invité</th><th>Chanson</th></tr></thead>
+    <tbody>
+      {% for guest in song_requests %}
+      <tr><td>{{ guest.group.group_name }}</td><td>{{ guest.first_name }} {{ guest.last_name }}</td><td>{{ guest.song_request }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="dash-empty">Aucune demande.</p>{% endif %}
+</div>
+
+<div class="dash-section">
+  <h2>Messages des invités ({{ group_messages|length }})</h2>
+  {% if group_messages %}
+  <table class="dash-table">
+    <thead><tr><th>Groupe</th><th>Message</th></tr></thead>
+    <tbody>
+      {% for group in group_messages %}
+      <tr><td>{{ group.group_name }}</td><td>{{ group.group_message }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="dash-empty">Aucun message.</p>{% endif %}
+</div>
+
+<div class="dash-section">
+  <h2>Groupes sans email de contact ({{ no_contact_email_groups|length }})</h2>
+  {% if no_contact_email_groups %}
+  <ul>
+    {% for group in no_contact_email_groups %}<li>{{ group.group_name }}</li>{% endfor %}
+  </ul>
+  {% else %}<p class="dash-empty">Tous les groupes ont un email de contact.</p>{% endif %}
+</div>
+{% endblock %}

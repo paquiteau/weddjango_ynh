@@ -8,7 +8,6 @@ from typing import final
 # wedding/models.py
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.core.exceptions import ValidationError
 
 
 class InvitationTier(models.TextChoices):
@@ -22,6 +21,7 @@ class InvitationTier(models.TextChoices):
 class StatusChoices(models.TextChoices):
     ENFANT = "C", _("Enfant")
     ADULTE = "A", _("Adulte")
+    ADOLESCENT = "D", _("Adolescent (Table sans alcool)")
     BABYSITTED = "B", _("Enfant qui a besoin d'un baby-sitting")
 
 
@@ -104,17 +104,6 @@ class Group(models.Model):
     def guest_count(self) -> int:
         return self.guests.count()
 
-    def clean(self):
-        """Ensure at least one guest in the group has an email address."""
-        # Check if the group has been saved and has guests associated
-        if self.id and not (
-            self.guests.filter(email__isnull=False).filter(email__gt="").exists()
-        ):
-            raise ValidationError(
-                "Au moins un invité doit avoir son adresse mail renseignée."
-            )
-
-
 
 @final
 class Guest(models.Model):
@@ -127,7 +116,7 @@ class Guest(models.Model):
 
     # Guest Info
     first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100, blank=True)
 
     status = models.CharField(
         choices=StatusChoices.choices,
@@ -151,6 +140,9 @@ class Guest(models.Model):
     )
     is_attending_dinner = models.BooleanField(
         default=False, verbose_name="Participe au Dîner"
+    )
+    is_attending_brunch = models.BooleanField(
+        default=False, verbose_name="Participe au Brunch"
     )
 
     dietary_restrictions = models.CharField(
