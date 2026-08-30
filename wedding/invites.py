@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import re
 import subprocess
 import tempfile
 from collections.abc import Iterable
 from io import BytesIO
 from pathlib import Path
 
+from django.conf import settings
 from django.template.loader import render_to_string
 from django.urls import reverse
 from pypdf import PdfReader, PdfWriter, Transformation
@@ -19,7 +21,35 @@ A4_WIDTH_PT = 297 * _MM_TO_PT
 A4_HEIGHT_PT = 210 * _MM_TO_PT
 
 # Matches the invite artwork's brand green (see the templates' `fill:#4c6244`).
-QR_CODE_COLOR = "#4c6244"
+QR_CODE_COLOR = "#333333"
+
+# The printer's own margin handling shifts each rotated page slightly within
+# its half of the sheet; on the counter-clockwise (odd-numbered) invite this
+# lands 2mm off after cutting, so nudge it down (in sheet space, post-rotation)
+# to compensate. Purely a print-registration fudge factor.
+_ODD_INVITE_PRINT_SHIFT_PT = 2 * _MM_TO_PT
+
+# Placeholder the invite artwork marks with `inkscape:label="QRCODE"`: a plain
+# `<rect id="qrcode" .../>`, kept free of any `href` so Inkscape can open and
+# re-export the artwork without choking on a non-URI attribute value. Its
+# geometry is taken as-is (so moving/resizing it in Inkscape just works) and
+# swapped for a live `<image>` of the generated QR code after rendering.
+_QRCODE_RECT_RE = re.compile(r'<rect\b(?:(?!/>).)*?id="qrcode"(?:(?!/>).)*?/>', re.S)
+_ATTR_RE = re.compile(r'([\w:-]+)="([^"]*)"')
+
+
+def _embed_qr_code(svg_string: str, qr_data_uri: str) -> str:
+    """Replaces the invite artwork's `qrcode` placeholder rect with the QR image."""
+    match = _QRCODE_RECT_RE.search(svg_string)
+    if match is None:
+        raise ValueError("invite template has no `<rect id=\"qrcode\">` placeholder")
+    attrs = dict(_ATTR_RE.findall(match.group()))
+    image_tag = (
+        f'<image x="{attrs["x"]}" y="{attrs["y"]}" '
+        f'width="{attrs["width"]}" height="{attrs["height"]}" '
+        f'preserveAspectRatio="xMidYMid meet" href="{qr_data_uri}" />'
+    )
+    return svg_string[: match.start()] + image_tag + svg_string[match.end() :]
 
 # Maps each invitation tier to the SVG template rendering its invite design.
 TIER_TEMPLATE_MAP: dict[str, str] = {
@@ -35,19 +65,19 @@ def render_invite_svg(group: Group) -> str:
     """Renders the invite SVG template for a group's tier, with its QR code."""
     template_name = TIER_TEMPLATE_MAP[group.invitation_tier]
 
-    domain = "https://yourweddingdomain.com"
     url_path = reverse("rsvp", kwargs={"invitation_code": group.invitation_code})
-    rsvp_url = f"{domain}{url_path}"
+    rsvp_url = f"{settings.SITE_DOMAIN}{url_path}"
 
     context = {
         "group": group,
         "guests": group.guests.all(),
-        "qr_data_uri": generate_qr_code_data_uri(
-            group.invitation_code, fill_color=QR_CODE_COLOR, back_color="transparent"
-        ),
         "rsvp_url": rsvp_url,
     }
-    return render_to_string(template_name, context)
+    svg_string = render_to_string(template_name, context)
+    qr_data_uri = generate_qr_code_data_uri(
+        group.invitation_code, fill_color=QR_CODE_COLOR, back_color="transparent"
+    )
+    return _embed_qr_code(svg_string, qr_data_uri)
 
 
 def svg_to_pdf_bytes(svg_string: str) -> bytes:
@@ -93,12 +123,18 @@ def _add_sheet(writer: PdfWriter, left_page, right_page) -> None:
     offset_x = (A4_WIDTH_PT - block_w) / 2
     offset_y = (A4_HEIGHT_PT - block_h) / 2
 
-    left_transform = Transformation().rotate(90).translate(invite_h + offset_x, offset_y)
+    left_transform = (
+        Transformation()
+        .rotate(90)
+        .translate(invite_h + offset_x, offset_y - _ODD_INVITE_PRINT_SHIFT_PT)
+    )
     sheet.merge_transformed_page(left_page, left_transform)
 
     if right_page is not None:
-        right_transform = Transformation().rotate(-90).translate(
-            invite_h + offset_x, invite_w + offset_y
+        right_transform = (
+            Transformation()
+            .rotate(-90)
+            .translate(invite_h + offset_x, invite_w + offset_y)
         )
         sheet.merge_transformed_page(right_page, right_transform)
 

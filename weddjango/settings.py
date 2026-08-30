@@ -118,6 +118,9 @@ USE_TZ = True
 # RSVP form closes after this date/time (matches the deadline advertised on the homepage).
 RSVP_DEADLINE = datetime(2027, 2, 10, 23, 59, 59, tzinfo=ZoneInfo(TIME_ZONE))
 
+# Public domain used to build absolute RSVP URLs (invite QR codes, emails).
+SITE_DOMAIN = "https://marine-pa.comby.xyz"
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/

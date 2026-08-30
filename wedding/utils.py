@@ -4,6 +4,7 @@ import base64
 from io import BytesIO
 
 import qrcode
+from django.conf import settings
 from django.urls import reverse
 
 
@@ -13,10 +14,8 @@ def generate_qr_code_data(invitation_code: str, fill_color: str = "black", back_
     Returns: BytesIO object containing PNG image data.
     """
     # 1. Build the full RSVP URL
-    # IMPORTANT: Use your actual production domain for the final email send.
-    domain = 'https://yourweddingdomain.com'
     url_path = reverse('rsvp', kwargs={'invitation_code': invitation_code})
-    full_url = f'{domain}{url_path}'
+    full_url = f'{settings.SITE_DOMAIN}{url_path}'
 
     # 2. Generate QR Code
     qr = qrcode.QRCode(
