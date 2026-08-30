@@ -19,7 +19,7 @@ myynh_deploy_source() {
 # using uv (bootstrapped via pip since Debian's apt has no uv package).
 myynh_setup_venv() {
 	if [ ! -x "$install_dir/.venv/bin/uv" ]; then
-		python3 -m venv "$install_dir/.venv"
+		ynh_exec_as_app python3 -m venv "$install_dir/.venv"
 	fi
 	ynh_exec_as_app "$install_dir/.venv/bin/pip" install --quiet --upgrade pip uv
 	ynh_exec_as_app env UV_PROJECT_ENVIRONMENT="$install_dir/.venv" \
