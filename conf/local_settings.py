@@ -10,6 +10,12 @@ DEBUG = False
 
 ALLOWED_HOSTS = ["__DOMAIN__"]
 
+CSRF_TRUSTED_ORIGINS = ["https://__DOMAIN__"]
+
+# nginx sets X-Forwarded-Proto (conf/nginx.conf) so Django knows the original
+# request was HTTPS even though gunicorn only ever sees plain HTTP from it.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 SECRET_KEY_FILE = DATA_DIR / "secret.txt"
 if not SECRET_KEY_FILE.exists():
     import secrets
