@@ -1,0 +1,90 @@
+#!/bin/bash
+
+source _common.sh
+source /usr/share/yunohost/helpers
+
+#=================================================
+# SETTINGS
+#=================================================
+ynh_script_progression "Storing installation settings..."
+
+ynh_app_setting_set --key=log_file --value="$log_file"
+
+#=================================================
+# SETUP LOGGING
+#=================================================
+ynh_script_progression "Setting up logging..."
+
+myynh_setup_log_file
+ynh_config_add_logrotate "$log_file"
+
+#=================================================
+# DEPLOY SOURCE & PYTHON VIRTUALENV
+#=================================================
+ynh_script_progression "Deploying application source..."
+
+myynh_deploy_source
+
+ynh_script_progression "Setting up Python virtualenv..."
+
+myynh_setup_venv
+
+#=================================================
+# CONFIGURE
+#=================================================
+ynh_script_progression "Adding $app's configuration..."
+
+ynh_config_add --template="local_settings.py" --destination="$install_dir/weddjango/local_settings.py"
+ynh_config_add --template="gunicorn.conf.py" --destination="$data_dir/gunicorn.conf.py"
+
+#=================================================
+# INITIALIZE APP
+#=================================================
+ynh_script_progression "Running migrations and collecting static files..."
+
+myynh_fix_file_permissions
+
+ynh_exec_as_app "$install_dir/.venv/bin/python" "$install_dir/manage.py" migrate --no-input
+ynh_exec_as_app "$install_dir/.venv/bin/python" "$install_dir/manage.py" collectstatic --no-input
+
+admin_mail=$(ynh_user_get_info --username="$admin" --key=mail)
+ynh_exec_as_app env \
+	DJANGO_SUPERUSER_USERNAME="$admin" \
+	DJANGO_SUPERUSER_EMAIL="$admin_mail" \
+	DJANGO_SUPERUSER_PASSWORD="$password" \
+	"$install_dir/.venv/bin/python" "$install_dir/manage.py" createsuperuser --noinput
+
+#=================================================
+# SETUP SYSTEMD
+#=================================================
+ynh_script_progression "Configuring systemd service..."
+
+ynh_config_add_systemd
+yunohost service add "$app" --description="$app Django app"
+
+#=================================================
+# SECURE FILES AND DIRECTORIES
+#=================================================
+ynh_script_progression "Setting $app file permissions..."
+
+myynh_fix_file_permissions
+
+#=================================================
+# START APP
+#=================================================
+ynh_script_progression "Starting $app's systemd service..."
+
+ynh_systemctl --service="$app" --action="start" --log_path="$log_file"
+
+#=================================================
+# NGINX CONFIGURATION
+#=================================================
+ynh_script_progression "Configuring nginx web server..."
+
+ynh_config_add_nginx
+
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_script_progression "Installation of $app completed"

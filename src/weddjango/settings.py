@@ -134,3 +134,11 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Overridden in production by the YunoHost packaging, which renders
+# local_settings.py from conf/local_settings.py (SECRET_KEY, ALLOWED_HOSTS,
+# DATABASES, STATIC_ROOT, MEDIA_ROOT, SITE_DOMAIN).
+try:
+    from .local_settings import *  # noqa: F401,F403
+except ImportError:
+    pass
+

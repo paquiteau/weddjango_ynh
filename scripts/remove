@@ -1,0 +1,48 @@
+#!/bin/bash
+
+source _common.sh
+source /usr/share/yunohost/helpers
+
+#=================================================
+# REMOVE SERVICE FROM ADMIN PANEL
+#=================================================
+
+if yunohost service status "$app" >/dev/null 2>&1; then
+	ynh_script_progression "Removing $app service integration..."
+	yunohost service remove "$app"
+fi
+
+#=================================================
+# STOP AND REMOVE SYSTEMD SERVICE
+#=================================================
+ynh_script_progression "Stopping and removing $app's systemd service..."
+
+ynh_config_remove_systemd
+
+#=================================================
+# REMOVE APP DIRECTORIES
+#=================================================
+ynh_script_progression "Removing app main directory..."
+
+ynh_safe_rm "$install_dir"
+ynh_safe_rm "$data_dir"
+
+#=================================================
+# REMOVE NGINX CONFIGURATION
+#=================================================
+ynh_script_progression "Removing nginx web server configuration..."
+
+ynh_config_remove_nginx
+
+#=================================================
+# REMOVE LOGROTATE CONFIGURATION
+#=================================================
+ynh_script_progression "Removing logrotate configuration..."
+
+ynh_config_remove_logrotate
+
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_script_progression "Removal of $app completed"

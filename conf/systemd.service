@@ -1,0 +1,29 @@
+[Unit]
+Description=__APP__ server
+After=network.target
+
+[Service]
+User=__APP__
+WorkingDirectory=__INSTALL_DIR__
+Environment=DJANGO_SETTINGS_MODULE=weddjango.settings
+ExecStart=__INSTALL_DIR__/.venv/bin/gunicorn --config __DATA_DIR__/gunicorn.conf.py weddjango.wsgi:application
+
+StandardOutput=append:__LOG_FILE__
+StandardError=inherit
+
+Restart=on-failure
+RestartSec=5s
+
+# Sandboxing options to harden security
+NoNewPrivileges=yes
+PrivateTmp=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+ProtectSystem=full
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+LockPersonality=yes
+SystemCallFilter=~@clock @debug @module @mount @obsolete @reboot @setuid @swap
+
+[Install]
+WantedBy=multi-user.target

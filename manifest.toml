@@ -1,0 +1,63 @@
+# https://yunohost.org/en/packaging_manifest
+packaging_format = 2
+
+id = "weddjango"
+name = "Wedding RSVP"
+description.en = "Guest list, invitations and RSVP tracking for a wedding"
+description.fr = "Gestion des invités, invitations et RSVP pour un mariage"
+
+version = "0.1.0~ynh1"
+
+maintainers = []
+
+[upstream]
+license = "free"
+
+[integration]
+yunohost = ">=12"
+helpers_version = "2.1"
+architectures = "all"
+multi_instance = false
+ldap = false
+sso = false
+disk = "50M"
+ram.build = "50M"
+ram.runtime = "50M"
+
+[install]
+    [install.domain]
+    type = "domain"
+
+    [install.path]
+    type = "path"
+    default = "/"
+
+    [install.admin]
+    type = "user"
+
+    [install.password]
+    type = "password"
+    ask.en = "Password for the Django admin account (used for /admin/, since this app has no YunoHost SSO)"
+
+    [install.init_main_permission]
+    type = "group"
+    default = "visitors"
+
+[resources]
+    [resources.system_user]
+
+    [resources.install_dir]
+    # served by nginx directly for STATIC_ROOT/MEDIA_ROOT, so www-data needs read access
+    group = "www-data:r-x"
+
+    [resources.data_dir]
+    # holds the sqlite db and the Django SECRET_KEY, must stay private to the app user
+
+    [resources.permissions]
+    main.url = "/"
+
+    [resources.ports]
+    # random port for gunicorn, reverse-proxied by nginx, stored as $port
+
+    [resources.apt]
+    packages = "python3-venv, python3-pip"

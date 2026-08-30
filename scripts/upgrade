@@ -1,0 +1,76 @@
+#!/bin/bash
+
+source _common.sh
+source /usr/share/yunohost/helpers
+
+#=================================================
+# STOP SYSTEMD SERVICE
+#=================================================
+ynh_script_progression "Stopping $app's systemd service..."
+
+ynh_systemctl --service="$app" --action="stop" --log_path="$log_file"
+
+#=================================================
+# DEPLOY SOURCE & PYTHON VIRTUALENV
+#=================================================
+ynh_script_progression "Deploying application source..."
+
+myynh_deploy_source
+
+ynh_script_progression "Refreshing Python virtualenv..."
+
+myynh_setup_venv
+
+#=================================================
+# CONFIGURE
+#=================================================
+ynh_script_progression "Updating $app's configuration..."
+
+ynh_config_add --template="local_settings.py" --destination="$install_dir/weddjango/local_settings.py"
+ynh_config_add --template="gunicorn.conf.py" --destination="$data_dir/gunicorn.conf.py"
+
+#=================================================
+# UPGRADE APP
+#=================================================
+ynh_script_progression "Running migrations and collecting static files..."
+
+myynh_fix_file_permissions
+
+ynh_exec_as_app "$install_dir/.venv/bin/python" "$install_dir/manage.py" migrate --no-input
+ynh_exec_as_app "$install_dir/.venv/bin/python" "$install_dir/manage.py" collectstatic --no-input
+
+#=================================================
+# REAPPLY SYSTEM CONFIGURATIONS
+#=================================================
+ynh_script_progression "Upgrading system configurations related to $app..."
+
+ynh_config_add_systemd
+ynh_config_add_nginx
+ynh_config_add_logrotate "$log_file"
+
+#=================================================
+# SECURE FILES AND DIRECTORIES
+#=================================================
+ynh_script_progression "Setting $app file permissions..."
+
+myynh_fix_file_permissions
+
+#=================================================
+# START APP
+#=================================================
+ynh_script_progression "Starting $app's systemd service..."
+
+ynh_systemctl --service="$app" --action="restart" --log_path="$log_file"
+
+#=================================================
+# RELOAD NGINX
+#=================================================
+ynh_script_progression "Reloading nginx web server..."
+
+ynh_systemctl --service="nginx" --action="reload"
+
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_script_progression "Upgrade of $app completed"
