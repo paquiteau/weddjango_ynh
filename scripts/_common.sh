@@ -13,6 +13,10 @@ myynh_deploy_source() {
 	ynh_safe_rm "$install_dir/.venv"
 	ynh_safe_rm "$install_dir/.python-version"
 	find "$install_dir" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+
+	# mkdir/cp above run as root; hand ownership to the app user so
+	# myynh_setup_venv (which runs as $app) can write into install_dir.
+	chown -R "$app:$app" "$install_dir"
 }
 
 # Create/refresh the venv at $install_dir/.venv from src/pyproject.toml + src/uv.lock,
