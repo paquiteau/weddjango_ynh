@@ -500,6 +500,7 @@ body.wedding-page {
   margin: 0 auto 2rem;
   line-height: 1.7;
 }
+.rsvp-text a { color: var(--color-accent-green-dark); }
 
 /* Footer */
 .site-footer {

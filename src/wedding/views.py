@@ -105,7 +105,3 @@ def homepage_view(request: HttpRequest) -> HttpResponse:
     """The main info page for the wedding."""
     # You can add context here: schedule, location, etc.
     return render(request, 'wedding/homepage.html', {'lookup_form': RSVPLookupForm()})
-
-def gift_list_view(request: HttpRequest) -> HttpResponse:
-    """The wedding gift list page."""
-    return render(request, 'wedding/gift_list.html')
