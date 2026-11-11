@@ -69,7 +69,7 @@
     <thead><tr><th>Groupe</th><th>Invité</th><th>Détail</th></tr></thead>
     <tbody>
       {% for guest in dietary_guests %}
-      <tr><td>{{ guest.group.group_name }}</td><td>{{ guest.first_name }} {{ guest.last_name }}</td><td>{{ guest.dietary_restrictions }}</td></tr>
+      <tr><td><a href="{% url 'admin:wedding_group_change' guest.group_id %}">{{ guest.group.group_name }}</a></td><td>{{ guest.first_name }} {{ guest.last_name }}</td><td>{{ guest.dietary_restrictions }}</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -83,7 +83,7 @@
     <thead><tr><th>Groupe</th><th>Enfant</th><th>Notes</th></tr></thead>
     <tbody>
       {% for guest in babysitting_guests %}
-      <tr><td>{{ guest.group.group_name }}</td><td>{{ guest.first_name }} {{ guest.last_name }}</td><td>{{ guest.babysitting_notes }}</td></tr>
+      <tr><td><a href="{% url 'admin:wedding_group_change' guest.group_id %}">{{ guest.group.group_name }}</a></td><td>{{ guest.first_name }} {{ guest.last_name }}</td><td>{{ guest.babysitting_notes }}</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -97,7 +97,7 @@
     <thead><tr><th>Groupe</th><th>Invité</th><th>Chanson</th></tr></thead>
     <tbody>
       {% for guest in song_requests %}
-      <tr><td>{{ guest.group.group_name }}</td><td>{{ guest.first_name }} {{ guest.last_name }}</td><td>{{ guest.song_request }}</td></tr>
+      <tr><td><a href="{% url 'admin:wedding_group_change' guest.group_id %}">{{ guest.group.group_name }}</a></td><td>{{ guest.first_name }} {{ guest.last_name }}</td><td>{{ guest.song_request }}</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -111,7 +111,7 @@
     <thead><tr><th>Groupe</th><th>Message</th></tr></thead>
     <tbody>
       {% for group in group_messages %}
-      <tr><td>{{ group.group_name }}</td><td>{{ group.group_message }}</td></tr>
+      <tr><td><a href="{% url 'admin:wedding_group_change' group.pk %}">{{ group.group_name }}</a></td><td>{{ group.group_message }}</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -122,7 +122,7 @@
   <h2>Groupes sans email de contact ({{ no_contact_email_groups|length }})</h2>
   {% if no_contact_email_groups %}
   <ul>
-    {% for group in no_contact_email_groups %}<li>{{ group.group_name }}</li>{% endfor %}
+    {% for group in no_contact_email_groups %}<li><a href="{% url 'admin:wedding_group_change' group.pk %}">{{ group.group_name }}</a></li>{% endfor %}
   </ul>
   {% else %}<p class="dash-empty">Tous les groupes ont un email de contact.</p>{% endif %}
 </div>

@@ -10,7 +10,9 @@
 {% endblock %}
 
 {% block nav-global %}
-<div id="wedding-dashboard-link" style="padding: 8px 40px; background: var(--darkened-bg);">
+<div id="wedding-dashboard-link" style="margin-left: 20px;">
   <a href="{% url 'admin:dashboard' %}">Tableau de bord RSVP</a>
+  &nbsp;|&nbsp;
+  <a href="{% url 'admin:invitees' %}">Liste des invités</a>
 </div>
 {% endblock %}

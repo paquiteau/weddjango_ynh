@@ -1,0 +1,152 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<style>
+  .dash-grid { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; }
+  .dash-card { background: var(--body-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 16px 20px; min-width: 160px; }
+  .dash-card__value { font-size: 28px; font-weight: 600; display: block; }
+  .dash-card__label { color: var(--body-quiet-color); }
+  .dash-table { width: 100%; border-collapse: collapse; }
+  .dash-table th, .dash-table td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border-color); }
+  .dash-table td.event, .dash-table th.event { text-align: center; }
+  .presence--vient { background: var(--message-success-bg); }
+  .presence--ne-vient-pas { background: var(--message-error-bg); }
+  .presence--en-attente { background: var(--message-warning-bg); }
+  .invitee-head th { cursor: pointer; user-select: none; white-space: nowrap; }
+  .invitee-head th.sorted-asc::after { content: " \25B2"; }
+  .invitee-head th.sorted-desc::after { content: " \25BC"; }
+  .invitee-filters th { padding: 4px 4px 8px; }
+  .invitee-filters input, .invitee-filters select { width: 100%; min-width: 5em; box-sizing: border-box; }
+  .invitee-toolbar { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+  .invitee-toolbar__count { color: var(--body-quiet-color); }
+</style>
+
+<h1>Liste des invités</h1>
+
+<div class="dash-grid">
+  {% for label, count in presence_summary %}
+  <div class="dash-card"><span class="dash-card__value">{{ count }}</span><span class="dash-card__label">{{ label }}</span></div>
+  {% endfor %}
+</div>
+
+<div class="invitee-toolbar">
+  <a href="{% url 'admin:export_invitees_csv' %}" class="button">Exporter la liste des invités (CSV)</a>
+  <span class="invitee-toolbar__count" id="invitee-count"></span>
+</div>
+
+{# data-filter picks the header filter control; cells may carry data-value (filter + sort) and data-sort (sort only). #}
+<table class="dash-table" id="invitee-table">
+  <thead>
+    <tr class="invitee-head">
+      <th data-filter="text">Groupe</th>
+      <th data-filter="text">Invité</th>
+      <th data-filter="select">Catégorie</th>
+      <th data-filter="select">Formule</th>
+      <th data-filter="select" class="event">A répondu</th>
+      <th data-filter="select">Présence</th>
+      {% for label in event_labels %}<th data-filter="select" class="event">{{ label }}</th>{% endfor %}
+      <th data-filter="text">Email</th>
+    </tr>
+    <tr class="invitee-filters"></tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr data-row>
+      <td><a href="{% url 'admin:wedding_group_change' row.group.pk %}">{{ row.group.group_name }}</a></td>
+      <td>{{ row.guest.first_name }} {{ row.guest.last_name }}</td>
+      <td>{{ row.guest.get_status_display }}</td>
+      <td title="{{ row.group.get_invitation_tier_display }}">{{ row.tier }}</td>
+      <td class="event" data-value="{{ row.replied|yesno:'Oui,Non' }}" data-sort="{{ row.group.submitted_at|date:'c' }}">{% include "admin/_bool_icon.html" with value=row.replied title=row.group.submitted_at|date:"d/m/Y H:i" %}</td>
+      <td class="presence--{{ row.presence|slugify }}">{{ row.presence }}</td>
+      {% for value in row.events %}<td class="event" data-value="{% if value is True %}Oui{% elif value is False %}Non{% elif value is None %}?{% else %}—{% endif %}">{% include "admin/_bool_icon.html" with value=value title="" %}</td>{% endfor %}
+      <td>{{ row.guest.email|default:"" }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="12">Aucun invité.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script>
+(function () {
+  var table = document.getElementById('invitee-table');
+  var headers = Array.prototype.slice.call(table.querySelectorAll('.invitee-head th'));
+  var filterRow = table.querySelector('.invitee-filters');
+  var tbody = table.tBodies[0];
+  var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr[data-row]'));
+  var count = document.getElementById('invitee-count');
+  var collator = new Intl.Collator('fr', { numeric: true, sensitivity: 'base' });
+  var filters = [];
+  var sortCol = null;
+  var sortDir = 1;
+
+  function cellValue(row, i) {
+    var cell = row.cells[i];
+    return cell.dataset.value !== undefined ? cell.dataset.value : cell.textContent.trim();
+  }
+
+  function sortKey(row, i) {
+    var cell = row.cells[i];
+    return cell.dataset.sort !== undefined ? cell.dataset.sort : cellValue(row, i);
+  }
+
+  // Accent- and case-insensitive matching: "alienor" finds "Aliénor".
+  function fold(s) {
+    return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  }
+
+  function apply() {
+    var shown = 0;
+    rows.forEach(function (row) {
+      var ok = filters.every(function (f) {
+        var q = f.control.value;
+        if (!q) return true;
+        var v = cellValue(row, f.index);
+        return f.select ? v === q : fold(v).indexOf(fold(q)) !== -1;
+      });
+      row.hidden = !ok;
+      if (ok) shown++;
+    });
+    count.textContent = shown + ' / ' + rows.length + ' invités affichés';
+  }
+
+  function sortBy(i) {
+    sortDir = sortCol === i ? -sortDir : 1;
+    sortCol = i;
+    headers.forEach(function (th) { th.classList.remove('sorted-asc', 'sorted-desc'); });
+    headers[i].classList.add(sortDir === 1 ? 'sorted-asc' : 'sorted-desc');
+    rows.sort(function (a, b) { return sortDir * collator.compare(sortKey(a, i), sortKey(b, i)); });
+    rows.forEach(function (row) { tbody.appendChild(row); });
+  }
+
+  headers.forEach(function (th, i) {
+    var select = th.dataset.filter === 'select';
+    var control;
+    if (select) {
+      control = document.createElement('select');
+      control.add(new Option('Tous', ''));
+      var values = rows.map(function (row) { return cellValue(row, i); });
+      Array.from(new Set(values)).sort(collator.compare).forEach(function (v) {
+        control.add(new Option(v, v));
+      });
+    } else {
+      control = document.createElement('input');
+      control.type = 'search';
+      control.placeholder = 'Filtrer…';
+    }
+    control.setAttribute('aria-label', 'Filtrer ' + th.textContent.trim());
+    control.addEventListener('input', apply);
+    filters.push({ index: i, select: select, control: control });
+
+    var cell = document.createElement('th');
+    cell.appendChild(control);
+    filterRow.appendChild(cell);
+
+    th.title = 'Trier';
+    th.addEventListener('click', function () { sortBy(i); });
+  });
+
+  apply();
+})();
+</script>
+{% endblock %}

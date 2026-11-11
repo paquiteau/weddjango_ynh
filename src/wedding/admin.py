@@ -1,4 +1,5 @@
 import csv
+from collections import Counter
 from typing import override
 
 from django.conf import settings
@@ -10,11 +11,13 @@ from django.http import HttpRequest, HttpResponse
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
+from django.utils import timezone
 from django.utils.safestring import mark_safe
 
 from .invites import generate_invitations_pdf
 from .models import Group, Guest, InvitationTier, StatusChoices
 from .utils import generate_qr_code_data  # Import the utility function
+from .views import TIER_MAP
 
 EVENT_FIELDS = (
     ("is_attending_ceremony", "Cérémonie"),
@@ -23,6 +26,68 @@ EVENT_FIELDS = (
     ("is_attending_dinner", "Dîner"),
     ("is_attending_brunch", "Brunch"),
 )
+
+INVITEE_CSV_HEADER = [
+    "Groupe",
+    "Code",
+    "Prénom",
+    "Nom",
+    "Catégorie",
+    "Formule",
+    "A répondu",
+    "Date de réponse",
+    "Présence",
+    *(label for _, label in EVENT_FIELDS),
+    "Email",
+]
+
+
+def short_tier(group: Group) -> str:
+    """'Repas (+ Cocktail + ...)' -> 'Repas'; the included events are shown elsewhere."""
+    return group.get_invitation_tier_display().split(" (")[0]
+
+
+def invitee_rows() -> list[dict]:
+    """One row per guest with their RSVP state.
+
+    Per-event cells: "" if the guest's tier doesn't include the event,
+    None if the group hasn't replied yet, else the attendance bool.
+    """
+    rows = []
+    guests = Guest.objects.select_related("group").order_by("group__group_name", "id")
+    for guest in guests:
+        group = guest.group
+        invited_fields = TIER_MAP.get(group.invitation_tier, [])
+        replied = group.rsvp_submitted
+        events: list[bool | None | str] = []
+        for field, _ in EVENT_FIELDS:
+            if field not in invited_fields:
+                events.append("")
+            elif not replied:
+                events.append(None)
+            else:
+                events.append(getattr(guest, field))
+
+        if not invited_fields:
+            presence = "Faire-part"
+        elif not replied:
+            presence = "En attente"
+        elif any(getattr(guest, f) for f in invited_fields):
+            presence = "Vient"
+        else:
+            presence = "Ne vient pas"
+
+        rows.append(
+            {
+                "guest": guest,
+                "group": group,
+                "tier": short_tier(group),
+                "replied": replied,
+                "presence": presence,
+                "events": events,
+            }
+        )
+    return rows
 
 
 class GuestInlineFormSet(BaseInlineFormSet):
@@ -59,6 +124,7 @@ class SimpleWeddingAdminSite(admin.AdminSite):
 
     site_header = "Wedding Site Administration"  # Customize the header text
     site_title = "Wedding Admin"  # Customize the browser title
+    enable_nav_sidebar = False
 
     @override
     def has_permission(self, request: HttpRequest) -> bool:
@@ -74,6 +140,12 @@ class SimpleWeddingAdminSite(admin.AdminSite):
                 "dashboard/export-catering.csv",
                 self.admin_view(self.export_catering_csv),
                 name="export_catering_csv",
+            ),
+            path("invitees/", self.admin_view(self.invitees_view), name="invitees"),
+            path(
+                "invitees/export.csv",
+                self.admin_view(self.export_invitees_csv),
+                name="export_invitees_csv",
             ),
         ]
         # Custom urls must come first so they aren't shadowed by the catch-all app_list url.
@@ -166,6 +238,50 @@ class SimpleWeddingAdminSite(admin.AdminSite):
             "status_labels_items": StatusChoices.choices,
         }
         return TemplateResponse(request, "admin/dashboard.html", context)
+
+    def invitees_view(self, request: HttpRequest) -> HttpResponse:
+        rows = invitee_rows()
+        counts = Counter(row["presence"] for row in rows)
+        context = {
+            **self.each_context(request),
+            "title": "Liste des invités",
+            "rows": rows,
+            "presence_summary": [
+                (label, counts[label])
+                for label in ("Vient", "Ne vient pas", "En attente", "Faire-part")
+            ],
+            "event_labels": [label for _, label in EVENT_FIELDS],
+        }
+        return TemplateResponse(request, "admin/invitees.html", context)
+
+    def export_invitees_csv(self, request: HttpRequest) -> HttpResponse:
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="invites.csv"'
+        writer = csv.writer(response)
+        writer.writerow(INVITEE_CSV_HEADER)
+        for row in invitee_rows():
+            guest, group = row["guest"], row["group"]
+            writer.writerow(
+                [
+                    group.group_name,
+                    group.invitation_code,
+                    guest.first_name,
+                    guest.last_name,
+                    guest.get_status_display(),
+                    row["tier"],
+                    "Oui" if row["replied"] else "Non",
+                    timezone.localtime(group.submitted_at).strftime("%Y-%m-%d %H:%M")
+                    if group.submitted_at
+                    else "",
+                    row["presence"],
+                    *(
+                        {True: "Oui", False: "Non", None: "?"}.get(e, "")
+                        for e in row["events"]
+                    ),
+                    guest.email or "",
+                ]
+            )
+        return response
 
     def export_catering_csv(self, request: HttpRequest) -> HttpResponse:
         """Exports one row per attending guest, for handing to the caterer."""
@@ -336,7 +452,7 @@ class GroupAdmin(admin.ModelAdmin):
     # What to show in the main list
     list_display = (
         "group_name",
-        "invitation_tier",
+        "tier_display",
         "guest_count",
         "get_group_email",
         "rsvp_submitted",
@@ -427,6 +543,10 @@ class GroupAdmin(admin.ModelAdmin):
         if obj is None:
             return self.add_fieldsets
         return super().get_fieldsets(request, obj)
+
+    @admin.display(description="Invitation tier", ordering="invitation_tier")
+    def tier_display(self, obj: Group) -> str:
+        return short_tier(obj)
 
     @admin.display(description="RSVP Code")
     def get_formatted_code(self, obj: Group) -> str:
